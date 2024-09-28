@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun, ShoppingCart } from 'lucide-react';
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -27,9 +27,10 @@ import {
 interface NavbarProps {
   isLoggedIn: boolean;
   handleLogout: () => void;
+  cartItemCount: number;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, handleLogout }) => {
+const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, handleLogout, cartItemCount }) => {
   const { theme, setTheme } = useTheme();
 
   return (
@@ -85,39 +86,50 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, handleLogout }) => {
         </NavigationMenu>
         <div className="ml-auto flex items-center space-x-4">
           {isLoggedIn ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8 bg-green-100 dark:bg-green-800">
-                    <AvatarFallback className="text-green-600 dark:text-green-300">U</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 bg-white dark:bg-gray-800" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none text-green-600 dark:text-green-400">User</p>
-                    <p className="text-xs leading-none text-green-500 dark:text-green-500">
-                      user@example.com
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard" className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">Dashboard</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/profile" className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">Profile</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/orders" className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">Orders</Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">
-                  Log out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8 bg-green-100 dark:bg-green-800">
+                      <AvatarFallback className="text-green-600 dark:text-green-300">U</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 bg-white dark:bg-gray-800" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none text-green-600 dark:text-green-400">User</p>
+                      <p className="text-xs leading-none text-green-500 dark:text-green-500">
+                        user@example.com
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard" className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">Dashboard</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile" className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/orders" className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">Orders</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Button variant="ghost" className="relative p-2">
+                <ShoppingCart className="h-5 w-5 text-green-600 dark:text-green-400" />
+                {cartItemCount > 0 && (
+                  <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                    {cartItemCount}
+                  </span>
+                )}
+              </Button>
+            </>
           ) : (
             <>
               <Button variant="ghost" asChild className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">
@@ -129,7 +141,6 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, handleLogout }) => {
             </>
           )}
           
-          {/* Visible theme toggle button */}
           <Button
             variant="outline"
             size="sm"

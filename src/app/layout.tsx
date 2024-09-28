@@ -38,7 +38,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Navbar isLoggedIn={isLoggedIn} handleLogout={handleLogout} />
+          <Navbar isLoggedIn={isLoggedIn} handleLogout={handleLogout} cartItemCount={0} />
           <main className="container mx-auto px-4 py-8">{children}</main>
           <Toaster />
         </ThemeProvider>
