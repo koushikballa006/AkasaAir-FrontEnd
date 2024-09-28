@@ -1,23 +1,33 @@
-// File: src/app/dashboard/page.tsx
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import React, { useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ItemInventory from '@/components/dashboard/ItemInventory';
+import ShoppingCart from '@/components/dashboard/ShoppingCart';
+import OrderHistory from '@/components/dashboard/OrderHistory';
 
-export default function Dashboard() {
-  const router = useRouter()
-
-  useEffect(() => {
-    const token = localStorage.getItem('token')
-    if (!token) {
-      router.push('/login')
-    }
-  }, [router])
+export default function DashboardPage() {
+  const [activeTab, setActiveTab] = useState('inventory');
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
-      <p>Welcome to your dashboard. Here you can view your orders and manage your account.</p>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6 text-green-600 dark:text-green-400">Dashboard</h1>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="inventory">Browse Inventory</TabsTrigger>
+          <TabsTrigger value="cart">Shopping Cart</TabsTrigger>
+          <TabsTrigger value="orders">Order History</TabsTrigger>
+        </TabsList>
+        <TabsContent value="inventory">
+          <ItemInventory />
+        </TabsContent>
+        <TabsContent value="cart">
+          <ShoppingCart />
+        </TabsContent>
+        <TabsContent value="orders">
+          <OrderHistory />
+        </TabsContent>
+      </Tabs>
     </div>
-  )
+  );
 }
