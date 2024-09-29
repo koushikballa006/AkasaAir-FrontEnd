@@ -1,11 +1,10 @@
-'use client';
-
+"use client";
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus, Minus } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import Image from 'next/image';
 
 interface Product {
@@ -49,7 +48,7 @@ export default function CartPage() {
       }
       const data: Cart = await response.json();
       setCart(data);
-
+      
       setQuantities(prevQuantities => {
         const newQuantities = { ...prevQuantities };
         data.items.forEach((item) => {
@@ -69,28 +68,9 @@ export default function CartPage() {
 
   useEffect(() => {
     fetchCart();
-    const intervalId = setInterval(fetchCart, 3000);
+    const intervalId = setInterval(fetchCart, 3000); // Re-fetch cart every 3 seconds
     return () => clearInterval(intervalId);
   }, [fetchCart]);
-
-  const handleQuantityChange = useCallback((productId: string, value: string) => {
-    const numValue = parseInt(value, 10);
-    
-    setQuantities(prev => {
-      const item = cart.items.find(item => item.product._id === productId);
-      const maxStock = item ? item.product.inStock : 1;
-      const newQuantity = isNaN(numValue) ? 1 : Math.max(1, Math.min(numValue, maxStock));
-      
-      if (prev[productId] === newQuantity) {
-        return prev;
-      }
-      
-      return {
-        ...prev,
-        [productId]: newQuantity
-      };
-    });
-  }, [cart.items]);
 
   const updateCartItem = async (productId: string, newQuantity: number) => {
     try {
@@ -102,12 +82,12 @@ export default function CartPage() {
         },
         body: JSON.stringify({ quantity: newQuantity }),
       });
-
+      
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText);
       }
-
+      
       const updatedCart = await response.json();
       setCart(updatedCart);
       toast({
@@ -121,6 +101,17 @@ export default function CartPage() {
         description: error instanceof Error ? error.message : "Failed to update cart",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleQuantityChange = (productId: string, change: number) => {
+    const item = cart.items.find(item => item.product._id === productId);
+    if (item) {
+      const newQuantity = Math.max(1, Math.min(quantities[productId] + change, item.product.inStock));
+      if (newQuantity !== quantities[productId]) {
+        setQuantities(prev => ({ ...prev, [productId]: newQuantity }));
+        updateCartItem(productId, newQuantity);
+      }
     }
   };
 
@@ -177,42 +168,47 @@ export default function CartPage() {
       {cart.items.length === 0 ? (
         <p className="text-xl text-center">Your cart is empty.</p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {cart.items.map((item) => (
-            <Card key={item.product._id} className="bg-white dark:bg-gray-800">
+        <>
+          {cart.items.map((item: CartItem) => (
+            <Card key={item.product._id} className="mb-4">
               <CardHeader>
-                <Image
-                  src={item.product.image.url}
-                  alt={item.product.name}
-                  width={500}
-                  height={500}
-                  className="w-full h-48 object-contain mb-2 rounded-t-lg"
-                />
-                <CardTitle className="text-green-600 dark:text-green-400">{item.product.name}</CardTitle>
+                <CardTitle>{item.product.name}</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="mt-2 font-bold">Price: ${item.product.price.toFixed(2)}</p>
-                <p className="mt-1">In Stock: {item.product.inStock}</p>
-                <div className="flex items-center mt-2">
-                  <Input
-                    type="number"
-                    min="1"
-                    max={item.product.inStock}
-                    value={quantities[item.product._id] || item.quantity}
-                    onChange={(e) => handleQuantityChange(item.product._id, e.target.value)}
-                    className="w-20 mr-2"
+              <CardContent className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Image 
+                    src={item.product.image.url} 
+                    alt={item.product.name} 
+                    width={64}
+                    height={64}
+                    className="object-cover mr-4" 
                   />
-                  <Button 
-                    className="w-full"
-                    onClick={() => updateCartItem(item.product._id, quantities[item.product._id] || item.quantity)}
-                    disabled={item.product.inStock === 0 || (quantities[item.product._id] || item.quantity) > item.product.inStock}
-                  >
-                    {item.product.inStock === 0 ? "Out of Stock" : 
-                     (quantities[item.product._id] || item.quantity) > item.product.inStock ? "Exceeds Stock" : "Update"}
-                  </Button>
+                  <div>
+                    <p>Price: ${item.product.price.toFixed(2)}</p>
+                    <div className="flex items-center mt-2">
+                      <Button
+                        onClick={() => handleQuantityChange(item.product._id, -1)}
+                        disabled={quantities[item.product._id] <= 1}
+                        size="sm"
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span className="mx-2">{quantities[item.product._id] || item.quantity}</span>
+                      <Button
+                        onClick={() => handleQuantityChange(item.product._id, 1)}
+                        disabled={quantities[item.product._id] >= item.product.inStock}
+                        size="sm"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p>Total: ${(item.product.price * (quantities[item.product._id] || item.quantity)).toFixed(2)}</p>
+                    {item.product.inStock < (quantities[item.product._id] || item.quantity) && (
+                      <p className="text-red-500">Only {item.product.inStock} in stock</p>
+                    )}
+                  </div>
                 </div>
                 <Button
-                  className="w-full mt-2"
                   onClick={() => removeFromCart(item.product._id)}
                   variant="destructive"
                 >
@@ -221,11 +217,11 @@ export default function CartPage() {
               </CardContent>
             </Card>
           ))}
-        </div>
+          <div className="mt-4">
+            <p className="text-xl font-bold">Total: ${cart.totalAmount.toFixed(2)}</p>
+          </div>
+        </>
       )}
-      <div className="mt-4">
-        <p className="text-xl font-bold">Total: ${cart.totalAmount.toFixed(2)}</p>
-      </div>
     </div>
   );
 }
