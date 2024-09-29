@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,24 +27,25 @@ export default function CategoryProductsPage() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const categoryName = Array.isArray(category) ? category[0] : category || '';
-        const data = await getProductsByCategory(categoryName);
-        setProducts(data.data || []);
-      } catch (err) {
-        setError('Error fetching products. Please try again later.');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
+  const fetchProducts = useCallback(async () => {
+    try {
+      setError(null);
+      const categoryName = Array.isArray(category) ? category[0] : category || '';
+      const data = await getProductsByCategory(categoryName);
+      setProducts(data.data || []);
+    } catch (err) {
+      setError('Error fetching products. Please try again later.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   }, [category]);
+
+  useEffect(() => {
+    fetchProducts();
+    const intervalId = setInterval(fetchProducts, 2000);
+    return () => clearInterval(intervalId);
+  }, [fetchProducts]);
 
   const handleAddToCart = async (productId: string) => {
     try {
@@ -79,7 +80,7 @@ export default function CategoryProductsPage() {
       <div className="container mx-auto px-4 py-8 text-center">
         <h1 className="text-3xl font-bold mb-4 text-red-600">Error</h1>
         <p className="text-xl">{error}</p>
-        <Button className="mt-4" onClick={() => window.location.reload()}>
+        <Button className="mt-4" onClick={fetchProducts}>
           Try Again
         </Button>
       </div>
