@@ -96,7 +96,7 @@ export default function CategoryProductsPage() {
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to add item to cart. Please try again.",
+        description: error instanceof Error ? error.message : "You have added maximum items from stock",
         variant: "destructive",
       });
     }
