@@ -47,13 +47,18 @@ export default function CartPage() {
 
   const validateCart = useCallback((cartItems: CartItem[]) => {
     const invalidItems = cartItems.filter(item => item.quantity > item.product.inStock);
+    
+    // Set out of stock items
     setOutOfStockItems(invalidItems.map(item => ({
       id: item.product._id,
       name: item.product.name,
       requested: item.quantity,
       available: item.product.inStock
     })));
-    setIsCartValid(invalidItems.length === 0 && cartItems.length > 0);
+
+    // Cart is valid if all items are in stock and there is at least one item
+    const hasValidItems = cartItems.length > 0 && invalidItems.length === 0;
+    setIsCartValid(hasValidItems);
   }, []);
 
   const fetchCart = useCallback(async () => {
@@ -69,7 +74,7 @@ export default function CartPage() {
       }
       const data: Cart = await response.json();
       setCart(data);
-      
+
       setQuantities(prevQuantities => {
         const newQuantities = { ...prevQuantities };
         data.items.forEach((item) => {
@@ -257,51 +262,59 @@ export default function CartPage() {
                         <Plus className="h-4 w-4" />
                       </Button>
                     </div>
-                    <p>Total: ${(item.product.price * (quantities[item.product._id] || item.quantity)).toFixed(2)}</p>
-                    {item.product.inStock < (quantities[item.product._id] || item.quantity) && (
-                      <p className="text-red-500">Only {item.product.inStock} in stock</p>
-                    )}
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                      Subtotal: ${item.itemTotal.toFixed(2)}
+                    </p>
+                    <p className="text-red-500 text-sm">
+                      In stock: {item.product.inStock}
+                    </p>
                   </div>
                 </div>
-                <Button
-                  onClick={() => removeFromCart(item.product._id)}
+                <Button 
                   variant="destructive"
+                  onClick={() => removeFromCart(item.product._id)}
                 >
                   Remove
                 </Button>
               </CardContent>
             </Card>
           ))}
-          <div className="mt-4">
-            <p className="text-xl font-bold">Total: ${cart.totalAmount.toFixed(2)}</p>
+
+          <div className="flex justify-end">
+            <h2 className="text-2xl font-bold">Total: ${cart.totalAmount.toFixed(2)}</h2>
+          </div>
+
+          <div className="flex justify-end mt-4">
             <Button
               onClick={checkout}
-              className="mt-4 bg-green-500 hover:bg-green-600 text-white"
               disabled={!isCartValid}
             >
-              Checkout
+              Proceed to Checkout
             </Button>
           </div>
         </>
       )}
+
       <Dialog open={showOutOfStockDialog} onOpenChange={setShowOutOfStockDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Out of Stock Items</DialogTitle>
+            <DialogTitle>Out of Stock</DialogTitle>
             <DialogDescription>
-              The following items are out of stock or have insufficient quantity:
+              Some items in your cart are out of stock. Please update your cart before proceeding to checkout.
             </DialogDescription>
           </DialogHeader>
           <ul>
-            {outOfStockItems.map((item: OutOfStockItem) => (
-              <li key={item.id} className="mb-2">
+            {outOfStockItems.map(item => (
+              <li key={item.id}>
                 {item.name}: Requested {item.requested}, Available {item.available}
               </li>
             ))}
           </ul>
-          <Button onClick={() => { setShowOutOfStockDialog(false); }}>
-            Close
-          </Button>
+          <div className="flex justify-end mt-4">
+            <Button onClick={() => setShowOutOfStockDialog(false)}>
+              Close
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
