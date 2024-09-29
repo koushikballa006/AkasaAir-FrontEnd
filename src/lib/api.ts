@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://akasaair-backend.onrender.com/api';
 
 export async function getAllProducts() {
   const response = await fetch(`${API_URL}/products`);
@@ -26,17 +26,10 @@ export async function addToCart(productId: string, quantity: number) {
     },
     body: JSON.stringify({ productId, quantity }),
   });
-  
-  const data = await response.json();
-  
   if (!response.ok) {
-    if (response.status === 400 && data.message.includes('exceeds available stock')) {
-      throw new Error(`Only ${data.availableStock} items available in stock.`);
-    }
-    throw new Error(data.message || 'Failed to add item to cart');
+    throw new Error('Failed to add item to cart');
   }
-  
-  return data;
+  return response.json();
 }
 
 export async function getCartCount() {
@@ -51,3 +44,4 @@ export async function getCartCount() {
   }
   return response.json();
 }
+

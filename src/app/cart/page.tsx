@@ -44,7 +44,7 @@ export default function CartPage() {
 
   const fetchCart = useCallback(async () => {
     try {
-      const response = await fetch('/api/cart', {
+      const response = await fetch('https://akasaair-backend.onrender.com/api/cart', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -106,7 +106,7 @@ export default function CartPage() {
 
   const removeFromCart = async (productId: string) => {
     try {
-      const response = await fetch(`/api/cart/${productId}`, { 
+      const response = await fetch(`https://akasaair-backend.onrender.com/api/cart/${productId}`, { 
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -132,7 +132,7 @@ export default function CartPage() {
 
   const checkout = async () => {
     try {
-      const response = await fetch('/api/cart/checkout', { 
+      const response = await fetch('https://akasaair-backend.onrender.com/api/cart/checkout', { 
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
