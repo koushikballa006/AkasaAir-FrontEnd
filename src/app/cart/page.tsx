@@ -138,18 +138,26 @@ export default function CartPage() {
       });
       
       console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
       
       const responseText = await response.text();
       console.log('Response text:', responseText);
       
       if (!response.ok) {
         let errorMessage = `Failed to update item quantity. Status: ${response.status}`;
-        try {
-          const errorData = JSON.parse(responseText);
-          errorMessage = errorData.message || errorMessage;
-        } catch (parseError) {
-          console.error('Error parsing error response:', parseError);
+        if (response.status === 404) {
+          errorMessage = `API endpoint not found. Please check the URL: ${response.url}`;
+        }
+        if (responseText.startsWith('<!DOCTYPE html>')) {
+          console.error('Received HTML response instead of JSON. Full response:', responseText);
+          errorMessage += '. Received HTML response instead of JSON.';
+        } else {
+          try {
+            const errorData = JSON.parse(responseText);
+            errorMessage = errorData.message || errorMessage;
+          } catch (parseError) {
+            console.error('Error parsing error response:', parseError);
+          }
         }
         throw new Error(errorMessage);
       }
