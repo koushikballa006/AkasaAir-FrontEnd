@@ -72,7 +72,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, handleLogout }) => {
                         href="/"
                       >
                         <div className="mb-2 mt-4 text-lg font-medium text-green-600 dark:text-green-300">
-                          Today's Special
+                          Today&apos;s Special
                         </div>
                         <p className="text-sm leading-tight text-green-700 dark:text-green-200">
                           Discover our fresh pick of the day!
