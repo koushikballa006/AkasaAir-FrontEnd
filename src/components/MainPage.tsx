@@ -45,7 +45,7 @@ interface MainPageProps {
 export default function MainPage({ isLoggedIn }: MainPageProps) {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>([]); // Keep this line to maintain existing state
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +84,7 @@ export default function MainPage({ isLoggedIn }: MainPageProps) {
           throw new Error('Invalid data format: Expected an array of products in the "data" property');
         }
 
-        setProducts(responseData.data);
+        setProducts(responseData.data); // Keep this line to maintain existing functionality
         const filtered = responseData.data.filter((product: { name: string; }) =>
           product.name.toLowerCase().includes(searchTerm.toLowerCase())
         );
