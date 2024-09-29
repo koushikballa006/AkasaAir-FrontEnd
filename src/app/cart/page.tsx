@@ -28,11 +28,20 @@ interface Cart {
   totalAmount: number;
 }
 
+interface OutOfStockItem {
+  id: string;
+  name: string;
+  requested: number;
+  available: number;
+}
+
 export default function CartPage() {
   const [cart, setCart] = useState<Cart>({ items: [], totalAmount: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
+  const [outOfStockItems, setOutOfStockItems] = useState<OutOfStockItem[]>([]);
+  const [showOutOfStockDialog, setShowOutOfStockDialog] = useState(false);
   const { toast } = useToast();
 
   const fetchCart = useCallback(async () => {
@@ -58,6 +67,17 @@ export default function CartPage() {
         });
         return newQuantities;
       });
+
+      const newOutOfStockItems = data.items
+        .filter(item => item.product.inStock < item.quantity)
+        .map(item => ({
+          id: item.product._id,
+          name: item.product.name,
+          requested: item.quantity,
+          available: item.product.inStock
+        }));
+      
+      setOutOfStockItems(newOutOfStockItems);
     } catch (err) {
       setError('Error fetching cart. Please try again later.');
       console.error(err);
@@ -141,6 +161,37 @@ export default function CartPage() {
     }
   };
 
+  const checkout = async () => {
+    try {
+      const response = await fetch('https://akasaair-backend.onrender.com/api/cart/checkout', { 
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: `Order placed successfully. Order ID: ${data.orderID}`,
+        });
+        fetchCart();
+      } else if (response.status === 400 && data.outOfStockItems) {
+        setOutOfStockItems(data.outOfStockItems);
+        setShowOutOfStockDialog(true);
+      } else {
+        throw new Error(data.message || 'Checkout failed');
+      }
+    } catch (error) {
+      console.error('Error during checkout:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Checkout failed",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -219,9 +270,36 @@ export default function CartPage() {
           ))}
           <div className="mt-4">
             <p className="text-xl font-bold">Total: ${cart.totalAmount.toFixed(2)}</p>
+            <Button
+              onClick={checkout}
+              className="mt-4 bg-green-500 hover:bg-green-600 text-white"
+              disabled={outOfStockItems.length > 0}
+            >
+              Checkout
+            </Button>
           </div>
         </>
       )}
+      <Dialog open={showOutOfStockDialog} onOpenChange={setShowOutOfStockDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Out of Stock Items</DialogTitle>
+            <DialogDescription>
+              The following items are out of stock or have insufficient quantity:
+            </DialogDescription>
+          </DialogHeader>
+          <ul>
+            {outOfStockItems.map((item: OutOfStockItem) => (
+              <li key={item.id} className="mb-2">
+                {item.name}: Requested {item.requested}, Available {item.available}
+              </li>
+            ))}
+          </ul>
+          <Button onClick={() => { setShowOutOfStockDialog(false); }}>
+            Close
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
