@@ -1,12 +1,11 @@
 'use client'
-
 import React from 'react';
 import { Search } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from 'next/link';
 import Slider from "react-slick";
-
 // Import css files for react-slick
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -51,14 +50,13 @@ export default function DashboardPage() {
           <div className="relative">
             <Input
               type="text"
-              placeholder="Search el Grocer Market..."
+              placeholder="Search products..."
               className="w-full py-2 px-4 pr-10 rounded-full"
             />
             <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-300" />
           </div>
         </div>
       </div>
-
       <div className="flex-grow bg-gray-50 dark:bg-gray-900 w-full">
         <div className="container mx-auto px-4 py-8">
           <h2 className="text-2xl font-bold mb-4 text-green-600 dark:text-green-400">Categories</h2>
@@ -71,7 +69,9 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-gray-600 dark:text-gray-300">{category.description}</p>
-                  <Button variant="link" className="mt-2 p-0 text-green-600 dark:text-green-400">View More →</Button>
+                  <Link href={`/category/${category.name}`}>
+                    <Button variant="link" className="mt-2 p-0 text-green-600 dark:text-green-400">View More →</Button>
+                  </Link>
                 </CardContent>
               </Card>
             ))}

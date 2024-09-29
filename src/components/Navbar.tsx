@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { Moon, Sun, ShoppingCart } from 'lucide-react';
@@ -23,15 +23,31 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { getCartCount } from '@/lib/api';
 
 interface NavbarProps {
   isLoggedIn: boolean;
   handleLogout: () => void;
-  cartItemCount: number;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, handleLogout, cartItemCount }) => {
+const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, handleLogout }) => {
   const { theme, setTheme } = useTheme();
+  const [cartItemCount, setCartItemCount] = useState(0);
+
+  useEffect(() => {
+    const fetchCartCount = async () => {
+      if (isLoggedIn) {
+        try {
+          const data = await getCartCount();
+          setCartItemCount(data.count);
+        } catch (error) {
+          console.error('Error fetching cart count:', error);
+        }
+      }
+    };
+
+    fetchCartCount();
+  }, [isLoggedIn]);
 
   return (
     <div className="border-b border-green-200 dark:border-green-800 bg-white dark:bg-gray-900">
@@ -112,7 +128,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, handleLogout, cartItemCount
                     <Link href="/profile" className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">Profile</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/dashboard" className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">Orders</Link>
+                    <Link href="/orders" className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">Orders</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">
@@ -121,14 +137,16 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, handleLogout, cartItemCount
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Button variant="ghost" className="relative p-2">
-                <ShoppingCart className="h-5 w-5 text-green-600 dark:text-green-400" />
-                {cartItemCount > 0 && (
-                  <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                    {cartItemCount}
-                  </span>
-                )}
-              </Button>
+              <Link href="/cart">
+                <Button variant="ghost" className="relative p-2">
+                  <ShoppingCart className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  {cartItemCount > 0 && (
+                    <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                      {cartItemCount}
+                    </span>
+                  )}
+                </Button>
+              </Link>
             </>
           ) : (
             <>
