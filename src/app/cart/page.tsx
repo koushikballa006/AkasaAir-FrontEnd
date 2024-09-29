@@ -134,21 +134,27 @@ export default function CartPage() {
         },
         body: JSON.stringify({ quantity: newQuantity }),
       });
+      
       if (!response.ok) {
-        throw new Error('Failed to update item quantity');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update item quantity');
       }
+      
+      const updatedCart = await response.json();
+      setCart(updatedCart);
+      
       toast({
         title: "Success",
         description: "Item quantity updated",
       });
-      fetchCart();
     } catch (error) {
       console.error('Error updating item quantity:', error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update item quantity",
+        description: error instanceof Error ? error.message : "Failed to update item quantity. Please try again.",
         variant: "destructive",
       });
+      fetchCart();
     }
   };
 
