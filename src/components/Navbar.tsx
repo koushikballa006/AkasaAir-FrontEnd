@@ -28,11 +28,12 @@ import { getCartCount } from '@/lib/api';
 interface NavbarProps {
   isLoggedIn: boolean;
   handleLogout: () => void;
+  cartItemCount?: number;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, handleLogout }) => {
+const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, handleLogout, cartItemCount: initialCartItemCount = 0 }) => {
   const { theme, setTheme } = useTheme();
-  const [cartItemCount, setCartItemCount] = useState(0);
+  const [cartItemCount, setCartItemCount] = useState(initialCartItemCount);
 
   useEffect(() => {
     const fetchCartCount = async () => {
