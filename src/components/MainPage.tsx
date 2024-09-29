@@ -1,5 +1,5 @@
 'use client'
-import React from 'react';
+import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,8 @@ interface MainPageProps {
 
 export default function MainPage({ isLoggedIn }: MainPageProps) {
   const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState('');
+  
   const settings = {
     dots: true,
     infinite: true,
@@ -55,6 +57,11 @@ export default function MainPage({ isLoggedIn }: MainPageProps) {
       });
     }
   };
+
+  const filteredCategories = categories.filter(category =>
+    category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    category.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="flex flex-col min-h-screen w-full">
@@ -80,7 +87,9 @@ export default function MainPage({ isLoggedIn }: MainPageProps) {
           <div className="relative">
             <Input
               type="text"
-              placeholder="Search products..."
+              placeholder="Search categories..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full py-2 px-4 pr-10 rounded-full"
             />
             <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-300" />
@@ -91,7 +100,7 @@ export default function MainPage({ isLoggedIn }: MainPageProps) {
         <div className="container mx-auto px-4 py-8">
           <h2 className="text-2xl font-bold mb-4 text-green-600 dark:text-green-400">Categories</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {categories.map((category) => (
+            {filteredCategories.map((category) => (
               <Card key={category.name} className="bg-white dark:bg-gray-800">
                 <CardHeader>
                   <Image 
