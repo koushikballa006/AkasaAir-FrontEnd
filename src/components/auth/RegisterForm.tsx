@@ -1,6 +1,5 @@
 // File: src/components/auth/RegisterForm.tsx
 'use client'
-
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from "react-hook-form"
@@ -10,14 +9,13 @@ import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 
 const formSchema = z.object({
@@ -50,9 +48,7 @@ export function RegisterForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values),
       })
-
       const data = await response.json()
-
       if (response.ok) {
         toast({
           title: "Registration successful",
@@ -66,7 +62,7 @@ export function RegisterForm() {
           variant: "destructive",
         })
       }
-    } catch (err) {
+    } catch (error) {
       toast({
         title: "Registration failed",
         description: 'An error occurred. Please try again.',
