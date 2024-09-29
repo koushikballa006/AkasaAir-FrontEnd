@@ -3,9 +3,9 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus, Minus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import Image from 'next/image'; // Import Image from next/image
+import Image from 'next/image';
 
 interface Product {
   _id: string;
@@ -56,7 +56,6 @@ export default function CartPage() {
       const data: Cart = await response.json();
       setCart(data);
       
-      // Check for out of stock items
       const newOutOfStockItems = data.items
         .filter(item => item.product.inStock < item.quantity)
         .map(item => ({
@@ -81,16 +80,11 @@ export default function CartPage() {
 
   useEffect(() => {
     fetchCart();
-    
-    // Set up polling every 5 seconds
     const intervalId = setInterval(fetchCart, 5000);
-    
-    // Clean up the interval on component unmount
     return () => clearInterval(intervalId);
   }, [fetchCart]);
 
   useEffect(() => {
-    // Compare current out-of-stock items with previous ones
     const hasNewOutOfStockItems = outOfStockItems.some(item => 
       !prevOutOfStockItemsRef.current.some(prevItem => 
         prevItem.id === item.id && prevItem.available === item.available
@@ -101,7 +95,6 @@ export default function CartPage() {
       setShowOutOfStockDialog(true);
     }
 
-    // Update the ref with current out-of-stock items
     prevOutOfStockItemsRef.current = outOfStockItems;
   }, [outOfStockItems]);
 
@@ -128,6 +121,44 @@ export default function CartPage() {
         description: error instanceof Error ? error.message : "Failed to remove item from cart",
         variant: "destructive",
       });
+    }
+  };
+
+  const updateQuantity = async (productId: string, newQuantity: number) => {
+    try {
+      const response = await fetch(`https://akasaair-backend.onrender.com/api/cart/${productId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ quantity: newQuantity }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to update item quantity');
+      }
+      toast({
+        title: "Success",
+        description: "Item quantity updated",
+      });
+      fetchCart();
+    } catch (error) {
+      console.error('Error updating item quantity:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update item quantity",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleQuantityChange = (productId: string, change: number) => {
+    const item = cart.items.find(item => item.product._id === productId);
+    if (item) {
+      const newQuantity = Math.max(1, Math.min(item.quantity + change, item.product.inStock));
+      if (newQuantity !== item.quantity) {
+        updateQuantity(productId, newQuantity);
+      }
     }
   };
 
@@ -188,13 +219,29 @@ export default function CartPage() {
                   <Image 
                     src={item.product.image.url} 
                     alt={item.product.name} 
-                    width={64} // Adjust the size as needed
-                    height={64} // Adjust the size as needed
+                    width={64}
+                    height={64}
                     className="object-cover mr-4" 
                   />
                   <div>
                     <p>Price: ${item.product.price.toFixed(2)}</p>
-                    <p>Quantity: {item.quantity}</p>
+                    <div className="flex items-center mt-2">
+                      <Button
+                        onClick={() => handleQuantityChange(item.product._id, -1)}
+                        disabled={item.quantity <= 1}
+                        size="sm"
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span className="mx-2">{item.quantity}</span>
+                      <Button
+                        onClick={() => handleQuantityChange(item.product._id, 1)}
+                        disabled={item.quantity >= item.product.inStock}
+                        size="sm"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
                     <p>Total: ${item.itemTotal.toFixed(2)}</p>
                     {item.product.inStock < item.quantity && (
                       <p className="text-red-500">Only {item.product.inStock} in stock</p>
