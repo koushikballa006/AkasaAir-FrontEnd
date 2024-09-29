@@ -42,19 +42,18 @@ export default function CartPage() {
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [outOfStockItems, setOutOfStockItems] = useState<OutOfStockItem[]>([]);
   const [showOutOfStockDialog, setShowOutOfStockDialog] = useState(false);
+  const [isCartValid, setIsCartValid] = useState(false);
   const { toast } = useToast();
 
-  const checkOutOfStockItems = useCallback((cartItems: CartItem[]) => {
-    const newOutOfStockItems = cartItems
-      .filter(item => item.product.inStock < item.quantity)
-      .map(item => ({
-        id: item.product._id,
-        name: item.product.name,
-        requested: item.quantity,
-        available: item.product.inStock
-      }));
-    
-    setOutOfStockItems(newOutOfStockItems);
+  const validateCart = useCallback((cartItems: CartItem[]) => {
+    const invalidItems = cartItems.filter(item => item.quantity > item.product.inStock);
+    setOutOfStockItems(invalidItems.map(item => ({
+      id: item.product._id,
+      name: item.product.name,
+      requested: item.quantity,
+      available: item.product.inStock
+    })));
+    setIsCartValid(invalidItems.length === 0 && cartItems.length > 0);
   }, []);
 
   const fetchCart = useCallback(async () => {
@@ -81,14 +80,14 @@ export default function CartPage() {
         return newQuantities;
       });
 
-      checkOutOfStockItems(data.items);
+      validateCart(data.items);
     } catch (err) {
       setError('Error fetching cart. Please try again later.');
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [checkOutOfStockItems]);
+  }, [validateCart]);
 
   useEffect(() => {
     fetchCart();
@@ -114,7 +113,7 @@ export default function CartPage() {
       
       const updatedCart = await response.json();
       setCart(updatedCart);
-      checkOutOfStockItems(updatedCart.items);
+      validateCart(updatedCart.items);
       toast({
         title: "Success",
         description: "Cart updated successfully",
@@ -278,7 +277,7 @@ export default function CartPage() {
             <Button
               onClick={checkout}
               className="mt-4 bg-green-500 hover:bg-green-600 text-white"
-              disabled={outOfStockItems.length > 0 || cart.items.length === 0}
+              disabled={!isCartValid}
             >
               Checkout
             </Button>
