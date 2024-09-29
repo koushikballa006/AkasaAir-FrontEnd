@@ -1,6 +1,5 @@
 // File: src/components/auth/LoginForm.tsx
 'use client'
-
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from "react-hook-form"
@@ -16,7 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 
 const formSchema = z.object({
@@ -47,9 +46,7 @@ export function LoginForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values),
       })
-
       const data = await response.json()
-
       if (response.ok) {
         localStorage.setItem('token', data.token)
         toast({
@@ -64,7 +61,7 @@ export function LoginForm() {
           variant: "destructive",
         })
       }
-    } catch (err) {
+    } catch (error) {
       toast({
         title: "Login failed",
         description: 'An error occurred. Please try again.',
