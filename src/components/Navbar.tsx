@@ -126,7 +126,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, handleLogout, cartItemCount
                     <Link href="/dashboard" className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">Dashboard</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/profile" className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">Profile</Link>
+                    <Link href="#" className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">Profile</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/order" className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">Orders</Link>
