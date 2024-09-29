@@ -1,4 +1,3 @@
-// File: src/components/auth/LoginForm.tsx
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -49,6 +48,9 @@ export function LoginForm() {
       const data = await response.json()
       if (response.ok) {
         localStorage.setItem('token', data.token)
+        localStorage.setItem('isLoggedIn', 'true')
+        // Dispatch a custom event to notify other components of the login
+        window.dispatchEvent(new Event('storage'))
         toast({
           title: "Login successful",
           description: "Welcome back!",

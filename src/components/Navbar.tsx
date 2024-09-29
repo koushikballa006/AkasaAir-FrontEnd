@@ -1,6 +1,7 @@
+// File: src/components/Navbar.tsx
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { Moon, Sun, ShoppingCart } from 'lucide-react';
@@ -23,32 +24,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getCartCount } from '@/lib/api';
 
 interface NavbarProps {
   isLoggedIn: boolean;
   handleLogout: () => void;
-  cartItemCount?: number;
+  cartItemCount: number;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, handleLogout, cartItemCount: initialCartItemCount = 0 }) => {
+const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, handleLogout, cartItemCount }) => {
   const { theme, setTheme } = useTheme();
-  const [cartItemCount, setCartItemCount] = useState(initialCartItemCount);
-
-  useEffect(() => {
-    const fetchCartCount = async () => {
-      if (isLoggedIn) {
-        try {
-          const data = await getCartCount();
-          setCartItemCount(data.count);
-        } catch (error) {
-          console.error('Error fetching cart count:', error);
-        }
-      }
-    };
-
-    fetchCartCount();
-  }, [isLoggedIn]);
 
   return (
     <div className="border-b border-green-200 dark:border-green-800 bg-white dark:bg-gray-900">
@@ -56,7 +40,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, handleLogout, cartItemCount
         <NavigationMenu>
           <NavigationMenuList>
             <NavigationMenuItem>
-              <Link href="/dashboard" legacyBehavior passHref>
+              <Link href="/" legacyBehavior passHref>
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                   <span className="font-bold text-green-600 dark:text-green-400">FreshEats</span>
                 </NavigationMenuLink>

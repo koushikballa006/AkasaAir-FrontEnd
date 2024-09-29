@@ -16,12 +16,40 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false)
+  const [cartItemCount, setCartItemCount] = useState<number>(0)
   const router = useRouter()
 
   useEffect(() => {
     const token = localStorage.getItem('token')
     setIsLoggedIn(!!token)
+
+    // Listen for changes in login state
+    const handleStorageChange = () => {
+      const newToken = localStorage.getItem('token')
+      setIsLoggedIn(!!newToken)
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+    }
   }, [])
+
+  useEffect(() => {
+    // Fetch cart item count here when logged in
+    if (isLoggedIn) {
+      // Replace this with your actual cart item count fetching logic
+      const fetchCartItemCount = async () => {
+        // const count = await getCartCount()
+        // setCartItemCount(count)
+        setCartItemCount(0) // Placeholder
+      }
+      fetchCartItemCount()
+    } else {
+      setCartItemCount(0)
+    }
+  }, [isLoggedIn])
 
   const handleLogout = () => {
     localStorage.removeItem('token')
@@ -38,7 +66,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Navbar isLoggedIn={isLoggedIn} handleLogout={handleLogout} cartItemCount={0} />
+          <Navbar isLoggedIn={isLoggedIn} handleLogout={handleLogout} cartItemCount={cartItemCount} />
           <main className="container mx-auto px-4 py-8">{children}</main>
           <Toaster />
         </ThemeProvider>

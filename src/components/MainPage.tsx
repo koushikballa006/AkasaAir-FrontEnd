@@ -20,7 +20,7 @@ const carouselItems = [
 const categories = [
  { name: 'Bakery', description: 'Bread, Cakes, Baking Products', image: '/images/categories/bakery.jpg' },
  { name: 'Beverages', description: 'Water, Soft Drinks, Juices, Energy Drinks', image: '/images/categories/beverages.jpg' },
- { name: 'Dairy & Eggs', description: 'Milk, Yoghurts, Cheese, Eggs, Butter, Cream, Laban Drink', image: '/images/categories/dairy.jpg' },
+ { name: 'Dairy & Eggs', description: 'Milk, Yoghurts, Cheese, Eggs, Butter, Cream, Laban Drink', image:'/images/categories/dairy.jpg' },
  { name: 'Fresh To Go', description: 'Cereals, Cereal Bars, Spreads, Jams, Honey', image: '/images/categories/fresh-to-go.jpg' },
  { name: 'Fruits & Vegetables', description: 'Fresh Fruits and Vegetables', image: '/images/categories/fruits-vegetables.jpg' },
  { name: 'Fresh & Frozen', description: 'Fresh and Frozen Products', image: '/images/categories/fresh-frozen.jpg' },
@@ -38,14 +38,11 @@ interface Product {
   };
 }
 
-interface MainPageProps {
-  isLoggedIn: boolean;
-}
-
-export default function MainPage({ isLoggedIn }: MainPageProps) {
+export default function MainPage() {
   const { toast } = useToast();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [products, setProducts] = useState<Product[]>([]); // Keep this line to maintain existing state
+  const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +56,22 @@ export default function MainPage({ isLoggedIn }: MainPageProps) {
     autoplay: true,
     autoplaySpeed: 3000,
   };
+
+  useEffect(() => {
+    // Check initial login state
+    setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
+
+    // Listen for changes in login state
+    const handleStorageChange = () => {
+      setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -84,7 +97,7 @@ export default function MainPage({ isLoggedIn }: MainPageProps) {
           throw new Error('Invalid data format: Expected an array of products in the "data" property');
         }
 
-        setProducts(responseData.data); // Keep this line to maintain existing functionality
+        setProducts(responseData.data);
         const filtered = responseData.data.filter((product: { name: string; }) =>
           product.name.toLowerCase().includes(searchTerm.toLowerCase())
         );
