@@ -64,27 +64,11 @@ export default function CategoryProductsPage() {
     }
   }, [category]);
 
-  const checkOutOfStock = useCallback(() => {
-    products.forEach(product => {
-      if (product.inStock === 0 && quantities[product._id] > 0) {
-        toast({
-          title: "Out of Stock",
-          description: `${product.name} is now out of stock.`,
-          variant: "destructive",
-        });
-        setQuantities(prev => ({ ...prev, [product._id]: 0 }));
-      }
-    });
-  }, [products, quantities, toast]);
-
   useEffect(() => {
     fetchProducts();
-    const intervalId = setInterval(() => {
-      fetchProducts();
-      checkOutOfStock();
-    }, 3000); // Re-render and check stock every 3 seconds
+    const intervalId = setInterval(fetchProducts, 3000); // Re-render and check stock every 3 seconds
     return () => clearInterval(intervalId);
-  }, [fetchProducts, checkOutOfStock]);
+  }, [fetchProducts]);
 
   const handleQuantityChange = useCallback((productId: string, value: string) => {
     const numValue = parseInt(value, 10);
