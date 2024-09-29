@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { getProductsByCategory, addToCart } from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import Image from 'next/image'; // Import Image from next/image
 
 interface Product {
   _id: string;
@@ -26,7 +27,7 @@ export default function CategoryProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [quantities, setQuantities] = useState<{[key: string]: number}>({});
+  const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const { toast } = useToast();
 
   const fetchProducts = useCallback(async () => {
@@ -35,17 +36,12 @@ export default function CategoryProductsPage() {
       const categoryName = Array.isArray(category) ? category[0] : category || '';
       const data = await getProductsByCategory(categoryName);
       setProducts(prevProducts => {
-        // Update product data while preserving quantities
-        const updatedProducts = data.data.map((newProduct: Product) => {
-          const existingProduct = prevProducts.find(p => p._id === newProduct._id);
-          return {
-            ...newProduct,
-            inStock: newProduct.inStock // Always use the latest stock information
-          };
-        });
-        return updatedProducts;
+        return data.data.map((newProduct: Product) => ({
+          ...newProduct,
+          inStock: newProduct.inStock // Always use the latest stock information
+        }));
       });
-      
+
       // Initialize quantities for new products only
       setQuantities(prevQuantities => {
         const newQuantities = { ...prevQuantities };
@@ -97,7 +93,6 @@ export default function CategoryProductsPage() {
         title: "Success",
         description: `Added ${quantity} item(s) to cart`,
       });
-      // Keep the quantity as is after adding to cart
     } catch (error) {
       toast({
         title: "Error",
@@ -141,9 +136,11 @@ export default function CategoryProductsPage() {
           {products.map((product) => (
             <Card key={product._id} className="bg-white dark:bg-gray-800">
               <CardHeader>
-                <img
+                <Image // Use Image component instead of img
                   src={product.image.url}
                   alt={product.name}
+                  width={500} // Set appropriate width
+                  height={500} // Set appropriate height
                   className="w-full h-48 object-contain mb-2 rounded-t-lg"
                 />
                 <CardTitle className="text-green-600 dark:text-green-400">{product.name}</CardTitle>
