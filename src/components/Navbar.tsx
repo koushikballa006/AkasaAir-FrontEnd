@@ -56,7 +56,7 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, handleLogout, cartItemCount
         <NavigationMenu>
           <NavigationMenuList>
             <NavigationMenuItem>
-              <Link href="/" legacyBehavior passHref>
+              <Link href="#" legacyBehavior passHref>
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                   <span className="font-bold text-green-600 dark:text-green-400">FreshEats</span>
                 </NavigationMenuLink>
@@ -83,17 +83,17 @@ const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, handleLogout, cartItemCount
                   </li>
                   <li>
                     <NavigationMenuLink asChild>
-                      <a href="/menu" className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">Full Menu</a>
+                      <a href="#" className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">Full Menu</a>
                     </NavigationMenuLink>
                   </li>
                   <li>
                     <NavigationMenuLink asChild>
-                      <a href="/categories" className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">Categories</a>
+                      <a href="#" className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">Categories</a>
                     </NavigationMenuLink>
                   </li>
                   <li>
                     <NavigationMenuLink asChild>
-                      <a href="/deals" className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">Special Deals</a>
+                      <a href="#" className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">Special Deals</a>
                     </NavigationMenuLink>
                   </li>
                 </ul>
