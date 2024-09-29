@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -29,11 +29,7 @@ const OrderHistory = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch('https://akasaair-backend.onrender.com/api/orders', {
@@ -57,7 +53,11 @@ const OrderHistory = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -80,7 +80,7 @@ const OrderHistory = () => {
       ) : orders.length === 0 ? (
         <Card>
           <CardContent className="p-6">
-            <p className="text-center text-gray-600 dark:text-gray-400">You haven't placed any orders yet.</p>
+            <p className="text-center text-gray-600 dark:text-gray-400">You haven&apos;t placed any orders yet.</p>
             <div className="mt-4 flex justify-center">
               <Button asChild className="bg-green-500 hover:bg-green-600 text-white">
                 <a href="/menu">Browse Menu</a>
