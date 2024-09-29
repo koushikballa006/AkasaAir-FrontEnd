@@ -1,11 +1,11 @@
 "use client";
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Minus } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import Image from 'next/image';
+import Image from 'next/image'; // Import Image from next/image
 
 interface Product {
   _id: string;
@@ -38,32 +38,13 @@ interface OutOfStockItem {
 export default function CartPage() {
   const [cart, setCart] = useState<Cart>({ items: [], totalAmount: 0 });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [outOfStockItems, setOutOfStockItems] = useState<OutOfStockItem[]>([]);
   const [showOutOfStockDialog, setShowOutOfStockDialog] = useState(false);
-  const [isCartValid, setIsCartValid] = useState(false);
   const { toast } = useToast();
-
-  const validateCart = useCallback((cartItems: CartItem[]) => {
-    const invalidItems = cartItems.filter(item => item.quantity > item.product.inStock);
-    
-    // Set out of stock items
-    setOutOfStockItems(invalidItems.map(item => ({
-      id: item.product._id,
-      name: item.product.name,
-      requested: item.quantity,
-      available: item.product.inStock
-    })));
-
-    // Cart is valid if all items are in stock and there is at least one item
-    const hasValidItems = cartItems.length > 0 && invalidItems.length === 0;
-    setIsCartValid(hasValidItems);
-  }, []);
+  const prevOutOfStockItemsRef = useRef<OutOfStockItem[]>([]);
 
   const fetchCart = useCallback(async () => {
     try {
-      setError(null);
       const response = await fetch('https://akasaair-backend.onrender.com/api/cart', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -74,79 +55,59 @@ export default function CartPage() {
       }
       const data: Cart = await response.json();
       setCart(data);
-
-      setQuantities(prevQuantities => {
-        const newQuantities = { ...prevQuantities };
-        data.items.forEach((item) => {
-          if (!(item.product._id in newQuantities)) {
-            newQuantities[item.product._id] = item.quantity;
-          }
-        });
-        return newQuantities;
+      
+      // Check for out of stock items
+      const newOutOfStockItems = data.items
+        .filter(item => item.product.inStock < item.quantity)
+        .map(item => ({
+          id: item.product._id,
+          name: item.product.name,
+          requested: item.quantity,
+          available: item.product.inStock
+        }));
+      
+      setOutOfStockItems(newOutOfStockItems);
+    } catch (error) {
+      console.error('Error fetching cart:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to load cart",
+        variant: "destructive",
       });
-
-      validateCart(data.items);
-    } catch (err) {
-      setError('Error fetching cart. Please try again later.');
-      console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [validateCart]);
+  }, [toast]);
 
   useEffect(() => {
     fetchCart();
-    const intervalId = setInterval(fetchCart, 3000); // Re-fetch cart every 3 seconds
+    
+    // Set up polling every 5 seconds
+    const intervalId = setInterval(fetchCart, 5000);
+    
+    // Clean up the interval on component unmount
     return () => clearInterval(intervalId);
   }, [fetchCart]);
 
-  const updateCartItem = async (productId: string, newQuantity: number) => {
-    try {
-      const response = await fetch(`https://akasaair-backend.onrender.com/api/cart/${productId}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ quantity: newQuantity }),
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText);
-      }
-      
-      const updatedCart = await response.json();
-      setCart(updatedCart);
-      validateCart(updatedCart.items);
-      toast({
-        title: "Success",
-        description: "Cart updated successfully",
-      });
-    } catch (error) {
-      console.error('Error updating cart:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update cart",
-        variant: "destructive",
-      });
-    }
-  };
+  useEffect(() => {
+    // Compare current out-of-stock items with previous ones
+    const hasNewOutOfStockItems = outOfStockItems.some(item => 
+      !prevOutOfStockItemsRef.current.some(prevItem => 
+        prevItem.id === item.id && prevItem.available === item.available
+      )
+    );
 
-  const handleQuantityChange = (productId: string, change: number) => {
-    const item = cart.items.find(item => item.product._id === productId);
-    if (item) {
-      const newQuantity = Math.max(1, Math.min((quantities[productId] || item.quantity) + change, item.product.inStock));
-      if (newQuantity !== (quantities[productId] || item.quantity)) {
-        setQuantities(prev => ({ ...prev, [productId]: newQuantity }));
-        updateCartItem(productId, newQuantity);
-      }
+    if (hasNewOutOfStockItems && outOfStockItems.length > 0) {
+      setShowOutOfStockDialog(true);
     }
-  };
+
+    // Update the ref with current out-of-stock items
+    prevOutOfStockItemsRef.current = outOfStockItems;
+  }, [outOfStockItems]);
 
   const removeFromCart = async (productId: string) => {
     try {
-      const response = await fetch(`https://akasaair-backend.onrender.com/api/cart/${productId}`, {
+      const response = await fetch(`https://akasaair-backend.onrender.com/api/cart/${productId}`, { 
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -210,18 +171,6 @@ export default function CartPage() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        <h1 className="text-3xl font-bold mb-4 text-red-600">Error</h1>
-        <p className="text-xl">{error}</p>
-        <Button className="mt-4" onClick={fetchCart}>
-          Try Again
-        </Button>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6 text-green-600 dark:text-green-400">Your Shopping Cart</h1>
@@ -239,84 +188,61 @@ export default function CartPage() {
                   <Image 
                     src={item.product.image.url} 
                     alt={item.product.name} 
-                    width={64}
-                    height={64}
+                    width={64} // Adjust the size as needed
+                    height={64} // Adjust the size as needed
                     className="object-cover mr-4" 
                   />
                   <div>
                     <p>Price: ${item.product.price.toFixed(2)}</p>
-                    <div className="flex items-center mt-2">
-                      <Button
-                        onClick={() => handleQuantityChange(item.product._id, -1)}
-                        disabled={quantities[item.product._id] <= 1}
-                        size="sm"
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <span className="mx-2">{quantities[item.product._id] || item.quantity}</span>
-                      <Button
-                        onClick={() => handleQuantityChange(item.product._id, 1)}
-                        disabled={quantities[item.product._id] >= item.product.inStock}
-                        size="sm"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                      Subtotal: ${item.itemTotal.toFixed(2)}
-                    </p>
-                    <p className="text-red-500 text-sm">
-                      In stock: {item.product.inStock}
-                    </p>
+                    <p>Quantity: {item.quantity}</p>
+                    <p>Total: ${item.itemTotal.toFixed(2)}</p>
+                    {item.product.inStock < item.quantity && (
+                      <p className="text-red-500">Only {item.product.inStock} in stock</p>
+                    )}
                   </div>
                 </div>
-                <Button 
-                  variant="destructive"
+                <Button
                   onClick={() => removeFromCart(item.product._id)}
+                  variant="destructive"
                 >
                   Remove
                 </Button>
               </CardContent>
             </Card>
           ))}
-
-          <div className="flex justify-end">
-            <h2 className="text-2xl font-bold">Total: ${cart.totalAmount.toFixed(2)}</h2>
-          </div>
-
-          <div className="flex justify-end mt-4">
+          <div className="mt-4">
+            <p className="text-xl font-bold">Total: ${cart.totalAmount.toFixed(2)}</p>
             <Button
               onClick={checkout}
-              disabled={!isCartValid}
+              className="mt-4 bg-green-500 hover:bg-green-600 text-white"
+              disabled={outOfStockItems.length > 0}
             >
-              Proceed to Checkout
+              Checkout
             </Button>
           </div>
         </>
       )}
-
       <Dialog open={showOutOfStockDialog} onOpenChange={setShowOutOfStockDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Out of Stock</DialogTitle>
+            <DialogTitle>Out of Stock Items</DialogTitle>
             <DialogDescription>
-              Some items in your cart are out of stock. Please update your cart before proceeding to checkout.
+              The following items are out of stock or have insufficient quantity:
             </DialogDescription>
           </DialogHeader>
           <ul>
-            {outOfStockItems.map(item => (
-              <li key={item.id}>
+            {outOfStockItems.map((item: OutOfStockItem) => (
+              <li key={item.id} className="mb-2">
                 {item.name}: Requested {item.requested}, Available {item.available}
               </li>
             ))}
           </ul>
-          <div className="flex justify-end mt-4">
-            <Button onClick={() => setShowOutOfStockDialog(false)}>
-              Close
-            </Button>
-          </div>
+          <Button onClick={() => { setShowOutOfStockDialog(false); }}>
+            Close
+          </Button>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
+
