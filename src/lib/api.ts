@@ -26,10 +26,17 @@ export async function addToCart(productId: string, quantity: number) {
     },
     body: JSON.stringify({ productId, quantity }),
   });
+  
+  const data = await response.json();
+  
   if (!response.ok) {
-    throw new Error('Failed to add item to cart');
+    if (response.status === 400 && data.message.includes('exceeds available stock')) {
+      throw new Error(`Only ${data.availableStock} items available in stock.`);
+    }
+    throw new Error(data.message || 'Failed to add item to cart');
   }
-  return response.json();
+  
+  return data;
 }
 
 export async function getCartCount() {
@@ -44,4 +51,3 @@ export async function getCartCount() {
   }
   return response.json();
 }
-

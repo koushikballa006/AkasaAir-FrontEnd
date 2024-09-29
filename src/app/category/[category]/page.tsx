@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { getProductsByCategory, addToCart } from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
@@ -25,6 +26,7 @@ export default function CategoryProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [quantities, setQuantities] = useState<{[key: string]: number}>({});
   const { toast } = useToast();
 
   const fetchProducts = useCallback(async () => {
@@ -33,6 +35,12 @@ export default function CategoryProductsPage() {
       const categoryName = Array.isArray(category) ? category[0] : category || '';
       const data = await getProductsByCategory(categoryName);
       setProducts(data.data || []);
+      // Initialize quantities
+      const initialQuantities = (data.data || []).reduce((acc: {[key: string]: number}, product: Product) => {
+        acc[product._id] = 1;
+        return acc;
+      }, {});
+      setQuantities(initialQuantities);
     } catch (err) {
       setError('Error fetching products. Please try again later.');
       console.error(err);
@@ -43,21 +51,40 @@ export default function CategoryProductsPage() {
 
   useEffect(() => {
     fetchProducts();
-    const intervalId = setInterval(fetchProducts, 2000);
-    return () => clearInterval(intervalId);
   }, [fetchProducts]);
 
+  const handleQuantityChange = useCallback((productId: string, value: string) => {
+    const numValue = parseInt(value, 10);
+    
+    setQuantities(prev => {
+      const product = products.find(p => p._id === productId);
+      const maxStock = product ? product.inStock : 1;
+      const newQuantity = isNaN(numValue) ? 1 : Math.max(1, Math.min(numValue, maxStock));
+      
+      if (prev[productId] === newQuantity) {
+        return prev; // No change, return the previous state
+      }
+      
+      return {
+        ...prev,
+        [productId]: newQuantity
+      };
+    });
+  }, [products]);
+
   const handleAddToCart = async (productId: string) => {
+    const quantity = quantities[productId] || 1;
     try {
-      await addToCart(productId, 1);
+      await addToCart(productId, quantity);
       toast({
         title: "Success",
-        description: "Item added to cart",
+        description: `Added ${quantity} item(s) to cart`,
       });
+      // Keep the quantity as is after adding to cart
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to add item to cart. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to add item to cart. Please try again.",
         variant: "destructive",
       });
     }
@@ -108,13 +135,24 @@ export default function CategoryProductsPage() {
                 <p className="text-sm text-gray-600 dark:text-gray-300">{product.description}</p>
                 <p className="mt-2 font-bold">Price: ${product.price.toFixed(2)}</p>
                 <p className="mt-1">In Stock: {product.inStock}</p>
-                <Button 
-                  className="mt-2 w-full"
-                  onClick={() => handleAddToCart(product._id)}
-                  disabled={product.inStock === 0}
-                >
-                  {product.inStock === 0 ? "Out of Stock" : "Add to Cart"}
-                </Button>
+                <div className="flex items-center mt-2">
+                  <Input
+                    type="number"
+                    min="1"
+                    max={product.inStock}
+                    value={quantities[product._id] || 1}
+                    onChange={(e) => handleQuantityChange(product._id, e.target.value)}
+                    className="w-20 mr-2"
+                  />
+                  <Button 
+                    className="w-full"
+                    onClick={() => handleAddToCart(product._id)}
+                    disabled={product.inStock === 0 || quantities[product._id] > product.inStock}
+                  >
+                    {product.inStock === 0 ? "Out of Stock" : 
+                     quantities[product._id] > product.inStock ? "Exceeds Stock" : "Add to Cart"}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
