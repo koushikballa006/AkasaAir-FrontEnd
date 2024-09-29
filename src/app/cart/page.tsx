@@ -126,6 +126,8 @@ export default function CartPage() {
 
   const updateQuantity = async (productId: string, newQuantity: number) => {
     try {
+      console.log(`Updating quantity for product ${productId} to ${newQuantity}`);
+      
       const response = await fetch(`https://akasaair-backend.onrender.com/api/cart/${productId}`, {
         method: 'PUT',
         headers: {
@@ -135,12 +137,31 @@ export default function CartPage() {
         body: JSON.stringify({ quantity: newQuantity }),
       });
       
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+      
+      const responseText = await response.text();
+      console.log('Response text:', responseText);
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update item quantity');
+        let errorMessage = `Failed to update item quantity. Status: ${response.status}`;
+        try {
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.message || errorMessage;
+        } catch (parseError) {
+          console.error('Error parsing error response:', parseError);
+        }
+        throw new Error(errorMessage);
       }
       
-      const updatedCart = await response.json();
+      let updatedCart;
+      try {
+        updatedCart = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('Error parsing success response:', parseError);
+        throw new Error('Invalid response from server');
+      }
+      
       setCart(updatedCart);
       
       toast({
