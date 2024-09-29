@@ -1,10 +1,11 @@
-"use client";
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Button } from "@/components/ui/button";
+'use client';
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Plus, Minus } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Loader2 } from "lucide-react";
 import Image from 'next/image';
 
 interface Product {
@@ -28,23 +29,16 @@ interface Cart {
   totalAmount: number;
 }
 
-interface OutOfStockItem {
-  id: string;
-  name: string;
-  requested: number;
-  available: number;
-}
-
 export default function CartPage() {
   const [cart, setCart] = useState<Cart>({ items: [], totalAmount: 0 });
   const [loading, setLoading] = useState(true);
-  const [outOfStockItems, setOutOfStockItems] = useState<OutOfStockItem[]>([]);
-  const [showOutOfStockDialog, setShowOutOfStockDialog] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const { toast } = useToast();
-  const prevOutOfStockItemsRef = useRef<OutOfStockItem[]>([]);
 
   const fetchCart = useCallback(async () => {
     try {
+      setError(null);
       const response = await fetch('https://akasaair-backend.onrender.com/api/cart', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -55,52 +49,84 @@ export default function CartPage() {
       }
       const data: Cart = await response.json();
       setCart(data);
-      
-      const newOutOfStockItems = data.items
-        .filter(item => item.product.inStock < item.quantity)
-        .map(item => ({
-          id: item.product._id,
-          name: item.product.name,
-          requested: item.quantity,
-          available: item.product.inStock
-        }));
-      
-      setOutOfStockItems(newOutOfStockItems);
-    } catch (error) {
-      console.error('Error fetching cart:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to load cart",
-        variant: "destructive",
+
+      setQuantities(prevQuantities => {
+        const newQuantities = { ...prevQuantities };
+        data.items.forEach((item) => {
+          if (!(item.product._id in newQuantities)) {
+            newQuantities[item.product._id] = item.quantity;
+          }
+        });
+        return newQuantities;
       });
+    } catch (err) {
+      setError('Error fetching cart. Please try again later.');
+      console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     fetchCart();
-    const intervalId = setInterval(fetchCart, 5000);
+    const intervalId = setInterval(fetchCart, 3000);
     return () => clearInterval(intervalId);
   }, [fetchCart]);
 
-  useEffect(() => {
-    const hasNewOutOfStockItems = outOfStockItems.some(item => 
-      !prevOutOfStockItemsRef.current.some(prevItem => 
-        prevItem.id === item.id && prevItem.available === item.available
-      )
-    );
+  const handleQuantityChange = useCallback((productId: string, value: string) => {
+    const numValue = parseInt(value, 10);
+    
+    setQuantities(prev => {
+      const item = cart.items.find(item => item.product._id === productId);
+      const maxStock = item ? item.product.inStock : 1;
+      const newQuantity = isNaN(numValue) ? 1 : Math.max(1, Math.min(numValue, maxStock));
+      
+      if (prev[productId] === newQuantity) {
+        return prev;
+      }
+      
+      return {
+        ...prev,
+        [productId]: newQuantity
+      };
+    });
+  }, [cart.items]);
 
-    if (hasNewOutOfStockItems && outOfStockItems.length > 0) {
-      setShowOutOfStockDialog(true);
+  const updateCartItem = async (productId: string, newQuantity: number) => {
+    try {
+      const response = await fetch(`https://akasaair-backend.onrender.com/api/cart/${productId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ quantity: newQuantity }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText);
+      }
+
+      const updatedCart = await response.json();
+      setCart(updatedCart);
+      toast({
+        title: "Success",
+        description: "Cart updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating cart:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update cart",
+        variant: "destructive",
+      });
     }
-
-    prevOutOfStockItemsRef.current = outOfStockItems;
-  }, [outOfStockItems]);
+  };
 
   const removeFromCart = async (productId: string) => {
     try {
-      const response = await fetch(`https://akasaair-backend.onrender.com/api/cart/${productId}`, { 
+      const response = await fetch(`https://akasaair-backend.onrender.com/api/cart/${productId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -124,115 +150,23 @@ export default function CartPage() {
     }
   };
 
-  const updateQuantity = async (productId: string, newQuantity: number) => {
-    try {
-      console.log(`Updating quantity for product ${productId} to ${newQuantity}`);
-      
-      const response = await fetch(`https://akasaair-backend.onrender.com/api/cart/${productId}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ quantity: newQuantity }),
-      });
-      
-      console.log('Response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-      
-      const responseText = await response.text();
-      console.log('Response text:', responseText);
-      
-      if (!response.ok) {
-        let errorMessage = `Failed to update item quantity. Status: ${response.status}`;
-        if (response.status === 404) {
-          errorMessage = `API endpoint not found. Please check the URL: ${response.url}`;
-        }
-        if (responseText.startsWith('<!DOCTYPE html>')) {
-          console.error('Received HTML response instead of JSON. Full response:', responseText);
-          errorMessage += '. Received HTML response instead of JSON.';
-        } else {
-          try {
-            const errorData = JSON.parse(responseText);
-            errorMessage = errorData.message || errorMessage;
-          } catch (parseError) {
-            console.error('Error parsing error response:', parseError);
-          }
-        }
-        throw new Error(errorMessage);
-      }
-      
-      let updatedCart;
-      try {
-        updatedCart = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('Error parsing success response:', parseError);
-        throw new Error('Invalid response from server');
-      }
-      
-      setCart(updatedCart);
-      
-      toast({
-        title: "Success",
-        description: "Item quantity updated",
-      });
-    } catch (error) {
-      console.error('Error updating item quantity:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update item quantity. Please try again.",
-        variant: "destructive",
-      });
-      fetchCart();
-    }
-  };
-
-  const handleQuantityChange = (productId: string, change: number) => {
-    const item = cart.items.find(item => item.product._id === productId);
-    if (item) {
-      const newQuantity = Math.max(1, Math.min(item.quantity + change, item.product.inStock));
-      if (newQuantity !== item.quantity) {
-        updateQuantity(productId, newQuantity);
-      }
-    }
-  };
-
-  const checkout = async () => {
-    try {
-      const response = await fetch('https://akasaair-backend.onrender.com/api/cart/checkout', { 
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      const data = await response.json();
-      if (response.ok) {
-        toast({
-          title: "Success",
-          description: `Order placed successfully. Order ID: ${data.orderID}`,
-        });
-        fetchCart();
-      } else if (response.status === 400 && data.outOfStockItems) {
-        setOutOfStockItems(data.outOfStockItems);
-        setShowOutOfStockDialog(true);
-      } else {
-        throw new Error(data.message || 'Checkout failed');
-      }
-    } catch (error) {
-      console.error('Error during checkout:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Checkout failed",
-        variant: "destructive",
-      });
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Loader2 className="mr-2 h-16 w-16 animate-spin" />
         <span className="text-xl font-semibold">Loading cart...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <h1 className="text-3xl font-bold mb-4 text-red-600">Error</h1>
+        <p className="text-xl">{error}</p>
+        <Button className="mt-4" onClick={fetchCart}>
+          Try Again
+        </Button>
       </div>
     );
   }
@@ -243,47 +177,42 @@ export default function CartPage() {
       {cart.items.length === 0 ? (
         <p className="text-xl text-center">Your cart is empty.</p>
       ) : (
-        <>
-          {cart.items.map((item: CartItem) => (
-            <Card key={item.product._id} className="mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {cart.items.map((item) => (
+            <Card key={item.product._id} className="bg-white dark:bg-gray-800">
               <CardHeader>
-                <CardTitle>{item.product.name}</CardTitle>
+                <Image
+                  src={item.product.image.url}
+                  alt={item.product.name}
+                  width={500}
+                  height={500}
+                  className="w-full h-48 object-contain mb-2 rounded-t-lg"
+                />
+                <CardTitle className="text-green-600 dark:text-green-400">{item.product.name}</CardTitle>
               </CardHeader>
-              <CardContent className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Image 
-                    src={item.product.image.url} 
-                    alt={item.product.name} 
-                    width={64}
-                    height={64}
-                    className="object-cover mr-4" 
+              <CardContent>
+                <p className="mt-2 font-bold">Price: ${item.product.price.toFixed(2)}</p>
+                <p className="mt-1">In Stock: {item.product.inStock}</p>
+                <div className="flex items-center mt-2">
+                  <Input
+                    type="number"
+                    min="1"
+                    max={item.product.inStock}
+                    value={quantities[item.product._id] || item.quantity}
+                    onChange={(e) => handleQuantityChange(item.product._id, e.target.value)}
+                    className="w-20 mr-2"
                   />
-                  <div>
-                    <p>Price: ${item.product.price.toFixed(2)}</p>
-                    <div className="flex items-center mt-2">
-                      <Button
-                        onClick={() => handleQuantityChange(item.product._id, -1)}
-                        disabled={item.quantity <= 1}
-                        size="sm"
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <span className="mx-2">{item.quantity}</span>
-                      <Button
-                        onClick={() => handleQuantityChange(item.product._id, 1)}
-                        disabled={item.quantity >= item.product.inStock}
-                        size="sm"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <p>Total: ${item.itemTotal.toFixed(2)}</p>
-                    {item.product.inStock < item.quantity && (
-                      <p className="text-red-500">Only {item.product.inStock} in stock</p>
-                    )}
-                  </div>
+                  <Button 
+                    className="w-full"
+                    onClick={() => updateCartItem(item.product._id, quantities[item.product._id] || item.quantity)}
+                    disabled={item.product.inStock === 0 || (quantities[item.product._id] || item.quantity) > item.product.inStock}
+                  >
+                    {item.product.inStock === 0 ? "Out of Stock" : 
+                     (quantities[item.product._id] || item.quantity) > item.product.inStock ? "Exceeds Stock" : "Update"}
+                  </Button>
                 </div>
                 <Button
+                  className="w-full mt-2"
                   onClick={() => removeFromCart(item.product._id)}
                   variant="destructive"
                 >
@@ -292,38 +221,11 @@ export default function CartPage() {
               </CardContent>
             </Card>
           ))}
-          <div className="mt-4">
-            <p className="text-xl font-bold">Total: ${cart.totalAmount.toFixed(2)}</p>
-            <Button
-              onClick={checkout}
-              className="mt-4 bg-green-500 hover:bg-green-600 text-white"
-              disabled={outOfStockItems.length > 0}
-            >
-              Checkout
-            </Button>
-          </div>
-        </>
+        </div>
       )}
-      <Dialog open={showOutOfStockDialog} onOpenChange={setShowOutOfStockDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Out of Stock Items</DialogTitle>
-            <DialogDescription>
-              The following items are out of stock or have insufficient quantity:
-            </DialogDescription>
-          </DialogHeader>
-          <ul>
-            {outOfStockItems.map((item: OutOfStockItem) => (
-              <li key={item.id} className="mb-2">
-                {item.name}: Requested {item.requested}, Available {item.available}
-              </li>
-            ))}
-          </ul>
-          <Button onClick={() => { setShowOutOfStockDialog(false); }}>
-            Close
-          </Button>
-        </DialogContent>
-      </Dialog>
+      <div className="mt-4">
+        <p className="text-xl font-bold">Total: ${cart.totalAmount.toFixed(2)}</p>
+      </div>
     </div>
   );
 }
