@@ -1,10 +1,11 @@
-"use client"
+"use client";
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import Image from 'next/image'; // Import Image from next/image
 
 interface Product {
   _id: string;
@@ -184,7 +185,13 @@ export default function CartPage() {
               </CardHeader>
               <CardContent className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <img src={item.product.image.url} alt={item.product.name} className="w-16 h-16 object-cover mr-4" />
+                  <Image 
+                    src={item.product.image.url} 
+                    alt={item.product.name} 
+                    width={64} // Adjust the size as needed
+                    height={64} // Adjust the size as needed
+                    className="object-cover mr-4" 
+                  />
                   <div>
                     <p>Price: ${item.product.price.toFixed(2)}</p>
                     <p>Quantity: {item.quantity}</p>
