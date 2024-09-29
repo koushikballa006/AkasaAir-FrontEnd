@@ -5,14 +5,31 @@
   ],
   "rules": {
     "@typescript-eslint/no-unused-vars": "warn",
-    "@typescript-eslint/no-empty-interface": "off",
     "react/no-unescaped-entities": "off"
   },
   "overrides": [
     {
+      "files": ["src/components/MainPage.tsx"],
+      "rules": {
+        "@typescript-eslint/no-unused-vars": ["warn", { "varsIgnorePattern": "products" }]
+      }
+    },
+    {
+      "files": ["src/components/auth/LoginForm.tsx", "src/components/auth/RegisterForm.tsx"],
+      "rules": {
+        "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "error" }]
+      }
+    },
+    {
       "files": ["src/components/ui/input.tsx"],
       "rules": {
         "@typescript-eslint/no-empty-interface": "off"
+      }
+    },
+    {
+      "files": ["src/hooks/use-toast.ts"],
+      "rules": {
+        "@typescript-eslint/no-unused-vars": ["warn", { "varsIgnorePattern": "actionTypes" }]
       }
     }
   ]
