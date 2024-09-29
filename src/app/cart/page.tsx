@@ -1,57 +1,108 @@
-'use client';
-
-import React, { useState, useEffect } from 'react';
+"use client"
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+
+interface Product {
+  _id: string;
+  name: string;
+  price: number;
+  image: {
+    url: string;
+  };
+  inStock: number;
+}
 
 interface CartItem {
-  product: {
-    _id: string;
-    name: string;
-    price: number;
-    image: {
-      url: string;
-    };
-  };
+  product: Product;
   quantity: number;
   itemTotal: number;
 }
 
-export default function CartPage() {
-  const [cart, setCart] = useState<{ items: CartItem[], totalAmount: number }>({ items: [], totalAmount: 0 });
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+interface Cart {
+  items: CartItem[];
+  totalAmount: number;
+}
 
-  const fetchCart = async () => {
+interface OutOfStockItem {
+  id: string;
+  name: string;
+  requested: number;
+  available: number;
+}
+
+export default function CartPage() {
+  const [cart, setCart] = useState<Cart>({ items: [], totalAmount: 0 });
+  const [loading, setLoading] = useState(true);
+  const [outOfStockItems, setOutOfStockItems] = useState<OutOfStockItem[]>([]);
+  const [showOutOfStockDialog, setShowOutOfStockDialog] = useState(false);
+  const { toast } = useToast();
+  const prevOutOfStockItemsRef = useRef<OutOfStockItem[]>([]);
+
+  const fetchCart = useCallback(async () => {
     try {
       const response = await fetch('/api/cart', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
-      if (response.ok) {
-        const data = await response.json();
-        setCart(data);
-      } else {
+      if (!response.ok) {
         throw new Error('Failed to fetch cart');
       }
+      const data: Cart = await response.json();
+      setCart(data);
+      
+      // Check for out of stock items
+      const newOutOfStockItems = data.items
+        .filter(item => item.product.inStock < item.quantity)
+        .map(item => ({
+          id: item.product._id,
+          name: item.product.name,
+          requested: item.quantity,
+          available: item.product.inStock
+        }));
+      
+      setOutOfStockItems(newOutOfStockItems);
     } catch (error) {
       console.error('Error fetching cart:', error);
       toast({
         title: "Error",
-        description: "Failed to load cart",
+        description: error instanceof Error ? error.message : "Failed to load cart",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     fetchCart();
-  }, []);
+    
+    // Set up polling every 5 seconds
+    const intervalId = setInterval(fetchCart, 5000);
+    
+    // Clean up the interval on component unmount
+    return () => clearInterval(intervalId);
+  }, [fetchCart]);
+
+  useEffect(() => {
+    // Compare current out-of-stock items with previous ones
+    const hasNewOutOfStockItems = outOfStockItems.some(item => 
+      !prevOutOfStockItemsRef.current.some(prevItem => 
+        prevItem.id === item.id && prevItem.available === item.available
+      )
+    );
+
+    if (hasNewOutOfStockItems && outOfStockItems.length > 0) {
+      setShowOutOfStockDialog(true);
+    }
+
+    // Update the ref with current out-of-stock items
+    prevOutOfStockItemsRef.current = outOfStockItems;
+  }, [outOfStockItems]);
 
   const removeFromCart = async (productId: string) => {
     try {
@@ -61,20 +112,19 @@ export default function CartPage() {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
-      if (response.ok) {
-        toast({
-          title: "Success",
-          description: "Item removed from cart",
-        });
-        fetchCart();
-      } else {
+      if (!response.ok) {
         throw new Error('Failed to remove item from cart');
       }
+      toast({
+        title: "Success",
+        description: "Item removed from cart",
+      });
+      fetchCart();
     } catch (error) {
       console.error('Error removing item from cart:', error);
       toast({
         title: "Error",
-        description: "Failed to remove item from cart",
+        description: error instanceof Error ? error.message : "Failed to remove item from cart",
         variant: "destructive",
       });
     }
@@ -88,21 +138,24 @@ export default function CartPage() {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
+      const data = await response.json();
       if (response.ok) {
-        const data = await response.json();
         toast({
           title: "Success",
           description: `Order placed successfully. Order ID: ${data.orderID}`,
         });
         fetchCart();
+      } else if (response.status === 400 && data.outOfStockItems) {
+        setOutOfStockItems(data.outOfStockItems);
+        setShowOutOfStockDialog(true);
       } else {
-        throw new Error('Checkout failed');
+        throw new Error(data.message || 'Checkout failed');
       }
     } catch (error) {
       console.error('Error during checkout:', error);
       toast({
         title: "Error",
-        description: "Checkout failed",
+        description: error instanceof Error ? error.message : "Checkout failed",
         variant: "destructive",
       });
     }
@@ -124,7 +177,7 @@ export default function CartPage() {
         <p className="text-xl text-center">Your cart is empty.</p>
       ) : (
         <>
-          {cart.items.map(item => (
+          {cart.items.map((item: CartItem) => (
             <Card key={item.product._id} className="mb-4">
               <CardHeader>
                 <CardTitle>{item.product.name}</CardTitle>
@@ -136,6 +189,9 @@ export default function CartPage() {
                     <p>Price: ${item.product.price.toFixed(2)}</p>
                     <p>Quantity: {item.quantity}</p>
                     <p>Total: ${item.itemTotal.toFixed(2)}</p>
+                    {item.product.inStock < item.quantity && (
+                      <p className="text-red-500">Only {item.product.inStock} in stock</p>
+                    )}
                   </div>
                 </div>
                 <Button
@@ -152,12 +208,33 @@ export default function CartPage() {
             <Button
               onClick={checkout}
               className="mt-4 bg-green-500 hover:bg-green-600 text-white"
+              disabled={outOfStockItems.length > 0}
             >
               Checkout
             </Button>
           </div>
         </>
       )}
+      <Dialog open={showOutOfStockDialog} onOpenChange={setShowOutOfStockDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Out of Stock Items</DialogTitle>
+            <DialogDescription>
+              The following items are out of stock or have insufficient quantity:
+            </DialogDescription>
+          </DialogHeader>
+          <ul>
+            {outOfStockItems.map((item: OutOfStockItem) => (
+              <li key={item.id} className="mb-2">
+                {item.name}: Requested {item.requested}, Available {item.available}
+              </li>
+            ))}
+          </ul>
+          <Button onClick={() => { setShowOutOfStockDialog(false); }}>
+            Close
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
