@@ -44,6 +44,19 @@ export default function CartPage() {
   const [showOutOfStockDialog, setShowOutOfStockDialog] = useState(false);
   const { toast } = useToast();
 
+  const checkOutOfStockItems = useCallback((cartItems: CartItem[]) => {
+    const newOutOfStockItems = cartItems
+      .filter(item => item.product.inStock < item.quantity)
+      .map(item => ({
+        id: item.product._id,
+        name: item.product.name,
+        requested: item.quantity,
+        available: item.product.inStock
+      }));
+    
+    setOutOfStockItems(newOutOfStockItems);
+  }, []);
+
   const fetchCart = useCallback(async () => {
     try {
       setError(null);
@@ -68,23 +81,14 @@ export default function CartPage() {
         return newQuantities;
       });
 
-      const newOutOfStockItems = data.items
-        .filter(item => item.product.inStock < item.quantity)
-        .map(item => ({
-          id: item.product._id,
-          name: item.product.name,
-          requested: item.quantity,
-          available: item.product.inStock
-        }));
-      
-      setOutOfStockItems(newOutOfStockItems);
+      checkOutOfStockItems(data.items);
     } catch (err) {
       setError('Error fetching cart. Please try again later.');
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [checkOutOfStockItems]);
 
   useEffect(() => {
     fetchCart();
@@ -110,6 +114,7 @@ export default function CartPage() {
       
       const updatedCart = await response.json();
       setCart(updatedCart);
+      checkOutOfStockItems(updatedCart.items);
       toast({
         title: "Success",
         description: "Cart updated successfully",
@@ -127,8 +132,8 @@ export default function CartPage() {
   const handleQuantityChange = (productId: string, change: number) => {
     const item = cart.items.find(item => item.product._id === productId);
     if (item) {
-      const newQuantity = Math.max(1, Math.min(quantities[productId] + change, item.product.inStock));
-      if (newQuantity !== quantities[productId]) {
+      const newQuantity = Math.max(1, Math.min((quantities[productId] || item.quantity) + change, item.product.inStock));
+      if (newQuantity !== (quantities[productId] || item.quantity)) {
         setQuantities(prev => ({ ...prev, [productId]: newQuantity }));
         updateCartItem(productId, newQuantity);
       }
@@ -273,7 +278,7 @@ export default function CartPage() {
             <Button
               onClick={checkout}
               className="mt-4 bg-green-500 hover:bg-green-600 text-white"
-              disabled={outOfStockItems.length > 0}
+              disabled={outOfStockItems.length > 0 || cart.items.length === 0}
             >
               Checkout
             </Button>
