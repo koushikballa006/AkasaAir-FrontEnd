@@ -34,13 +34,28 @@ export default function CategoryProductsPage() {
       setError(null);
       const categoryName = Array.isArray(category) ? category[0] : category || '';
       const data = await getProductsByCategory(categoryName);
-      setProducts(data.data || []);
-      // Initialize quantities
-      const initialQuantities = (data.data || []).reduce((acc: {[key: string]: number}, product: Product) => {
-        acc[product._id] = 1;
-        return acc;
-      }, {});
-      setQuantities(initialQuantities);
+      setProducts(prevProducts => {
+        // Update product data while preserving quantities
+        const updatedProducts = data.data.map((newProduct: Product) => {
+          const existingProduct = prevProducts.find(p => p._id === newProduct._id);
+          return {
+            ...newProduct,
+            inStock: newProduct.inStock // Always use the latest stock information
+          };
+        });
+        return updatedProducts;
+      });
+      
+      // Initialize quantities for new products only
+      setQuantities(prevQuantities => {
+        const newQuantities = { ...prevQuantities };
+        data.data.forEach((product: Product) => {
+          if (!(product._id in newQuantities)) {
+            newQuantities[product._id] = 1;
+          }
+        });
+        return newQuantities;
+      });
     } catch (err) {
       setError('Error fetching products. Please try again later.');
       console.error(err);
@@ -49,9 +64,27 @@ export default function CategoryProductsPage() {
     }
   }, [category]);
 
+  const checkOutOfStock = useCallback(() => {
+    products.forEach(product => {
+      if (product.inStock === 0 && quantities[product._id] > 0) {
+        toast({
+          title: "Out of Stock",
+          description: `${product.name} is now out of stock.`,
+          variant: "destructive",
+        });
+        setQuantities(prev => ({ ...prev, [product._id]: 0 }));
+      }
+    });
+  }, [products, quantities, toast]);
+
   useEffect(() => {
     fetchProducts();
-  }, [fetchProducts]);
+    const intervalId = setInterval(() => {
+      fetchProducts();
+      checkOutOfStock();
+    }, 3000); // Re-render and check stock every 3 seconds
+    return () => clearInterval(intervalId);
+  }, [fetchProducts, checkOutOfStock]);
 
   const handleQuantityChange = useCallback((productId: string, value: string) => {
     const numValue = parseInt(value, 10);
