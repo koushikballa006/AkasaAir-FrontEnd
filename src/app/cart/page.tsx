@@ -53,8 +53,7 @@ export default function CartPage() {
       requested: item.quantity,
       available: item.product.inStock
     })));
-    const hasValidItems = cartItems.length > 0 && cartItems.every(item => item.quantity <= item.product.inStock);
-    setIsCartValid(hasValidItems);
+    setIsCartValid(invalidItems.length === 0 && cartItems.length > 0);
   }, []);
 
   const fetchCart = useCallback(async () => {
@@ -258,57 +257,51 @@ export default function CartPage() {
                         <Plus className="h-4 w-4" />
                       </Button>
                     </div>
-                    <p>Total: ${item.itemTotal.toFixed(2)}</p>
-                    <p className="text-red-500 text-sm">
-                      In stock: {item.product.inStock}
-                    </p>
+                    <p>Total: ${(item.product.price * (quantities[item.product._id] || item.quantity)).toFixed(2)}</p>
+                    {item.product.inStock < (quantities[item.product._id] || item.quantity) && (
+                      <p className="text-red-500">Only {item.product.inStock} in stock</p>
+                    )}
                   </div>
                 </div>
-                <Button 
-                  variant="destructive"
+                <Button
                   onClick={() => removeFromCart(item.product._id)}
+                  variant="destructive"
                 >
                   Remove
                 </Button>
               </CardContent>
             </Card>
           ))}
-
-          <div className="flex justify-end">
-            <h2 className="text-2xl font-bold">Total: ${cart.totalAmount.toFixed(2)}</h2>
-          </div>
-
-          <div className="flex justify-end mt-4">
+          <div className="mt-4">
+            <p className="text-xl font-bold">Total: ${cart.totalAmount.toFixed(2)}</p>
             <Button
               onClick={checkout}
+              className="mt-4 bg-green-500 hover:bg-green-600 text-white"
               disabled={!isCartValid}
             >
-              Proceed to Checkout
+              Checkout
             </Button>
           </div>
         </>
       )}
-
       <Dialog open={showOutOfStockDialog} onOpenChange={setShowOutOfStockDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Out of Stock</DialogTitle>
+            <DialogTitle>Out of Stock Items</DialogTitle>
             <DialogDescription>
-              Some items in your cart are out of stock. Please update your cart before proceeding to checkout.
+              The following items are out of stock or have insufficient quantity:
             </DialogDescription>
           </DialogHeader>
           <ul>
-            {outOfStockItems.map(item => (
-              <li key={item.id}>
+            {outOfStockItems.map((item: OutOfStockItem) => (
+              <li key={item.id} className="mb-2">
                 {item.name}: Requested {item.requested}, Available {item.available}
               </li>
             ))}
           </ul>
-          <div className="flex justify-end mt-4">
-            <Button onClick={() => setShowOutOfStockDialog(false)}>
-              Close
-            </Button>
-          </div>
+          <Button onClick={() => { setShowOutOfStockDialog(false); }}>
+            Close
+          </Button>
         </DialogContent>
       </Dialog>
     </div>
