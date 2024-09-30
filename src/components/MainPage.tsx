@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from 'next/image';
 import Slider from "react-slick";
 import { useToast } from "@/hooks/use-toast";
-import Footer from "@/components/ui/Footer";
 // Import css files for react-slick
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -245,7 +244,6 @@ export default function MainPage() {
           )}
         </div>
       </div>
-      <Footer />
     </div>
   );
 }
