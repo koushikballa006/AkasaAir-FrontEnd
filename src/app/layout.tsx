@@ -49,7 +49,8 @@ export default function RootLayout({
           }
 
         })
-        console.log(count?.data.items.length)
+
+        console.log(count?.data.items.length, count)
         // setCartItemCount(count)
         
         setCartItemCount(count?.data.items.length) // Placeholder
