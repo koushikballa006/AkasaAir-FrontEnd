@@ -30,13 +30,6 @@ export default function CategoryProductsPage() {
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const { toast } = useToast();
   const router = useRouter();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    // Check if the user is logged in
-    const loggedInStatus = localStorage.getItem('isLoggedIn') === 'true';
-    setIsLoggedIn(loggedInStatus);
-  }, []);
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -93,16 +86,6 @@ export default function CategoryProductsPage() {
   }, [products]);
 
   const handleAddToCart = async (productId: string) => {
-    if (!isLoggedIn) {
-      toast({
-        title: "Login Required",
-        description: "Please log in to add items to your cart.",
-        duration: 3000,
-      });
-      router.push('/login');
-      return;
-    }
-
     const quantity = quantities[productId] || 1;
     try {
       await addToCart(productId, quantity);
@@ -111,11 +94,20 @@ export default function CategoryProductsPage() {
         description: `Added ${quantity} item(s) to cart`,
       });
     } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "You have added maximum items from stock",
-        variant: "destructive",
-      });
+      if (error instanceof Error && error.message === 'Failed to add item to cart') {
+        toast({
+          title: "Login Required",
+          description: "Please log in to add items to your cart.",
+          duration: 3000,
+        });
+        router.push('/login');
+      } else {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "An unknown error occurred",
+          variant: "destructive",
+        });
+      }
     }
   };
 
