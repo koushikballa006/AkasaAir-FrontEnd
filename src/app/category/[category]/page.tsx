@@ -147,7 +147,7 @@ export default function CategoryProductsPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-600 dark:text-gray-300">{product.description}</p>
-                <p className="mt-2 font-bold">Price: ${product.price.toFixed(2)}</p>
+                <p className="mt-2 font-bold">Price: ₹{product.price.toFixed(2)}</p>
                 <p className="mt-1">In Stock: {product.inStock}</p>
                 <div className="flex items-center mt-2">
                   <Input
