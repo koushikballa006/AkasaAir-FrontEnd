@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 
 const Footer = () => {
   return (
-    <footer className="bg-gray-100 dark:bg-gray-800 py-8">
+    <footer className="bg-gray-50 dark:bg-gray-900 py-8">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <Card>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="bg-white dark:bg-gray-800">
             <CardHeader>
-              <CardTitle>About Us</CardTitle>
+              <CardTitle className="text-green-600 dark:text-green-400">About Us</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-gray-600 dark:text-gray-300">
@@ -20,9 +20,9 @@ const Footer = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-white dark:bg-gray-800">
             <CardHeader>
-              <CardTitle>Quick Links</CardTitle>
+              <CardTitle className="text-green-600 dark:text-green-400">Quick Links</CardTitle>
             </CardHeader>
             <CardContent>
               <ul className="space-y-2">
@@ -34,9 +34,9 @@ const Footer = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-white dark:bg-gray-800">
             <CardHeader>
-              <CardTitle>Contact Info</CardTitle>
+              <CardTitle className="text-green-600 dark:text-green-400">Contact Info</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-gray-600 dark:text-gray-300">123 Grocery St, Food City, FC 12345</p>
@@ -45,19 +45,19 @@ const Footer = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-white dark:bg-gray-800">
             <CardHeader>
-              <CardTitle>Follow Us</CardTitle>
+              <CardTitle className="text-green-600 dark:text-green-400">Follow Us</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex space-x-4">
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">
                   <Facebook className="h-5 w-5" />
                 </Button>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">
                   <Twitter className="h-5 w-5" />
                 </Button>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300">
                   <Instagram className="h-5 w-5" />
                 </Button>
               </div>
