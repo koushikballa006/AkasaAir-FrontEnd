@@ -193,9 +193,9 @@ export default function CartPage() {
                     className="object-cover mr-4" 
                   />
                   <div>
-                    <p>Price: ${item.product.price.toFixed(2)}</p>
+                    <p>Price: ₹{item.product.price.toFixed(2)}</p>
                     <p>Quantity: {item.quantity}</p>
-                    <p>Total: ${item.itemTotal.toFixed(2)}</p>
+                    <p>Total: ₹{item.itemTotal.toFixed(2)}</p>
                     {item.product.inStock < item.quantity && (
                       <p className="text-red-500">Only {item.product.inStock} in stock</p>
                     )}
@@ -211,7 +211,7 @@ export default function CartPage() {
             </Card>
           ))}
           <div className="mt-4">
-            <p className="text-xl font-bold">Total: ${cart.totalAmount.toFixed(2)}</p>
+            <p className="text-xl font-bold">Total: ₹{cart.totalAmount.toFixed(2)}</p>
             <Button
               onClick={checkout}
               className="mt-4 bg-green-500 hover:bg-green-600 text-white"
