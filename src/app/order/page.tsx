@@ -105,7 +105,7 @@ const OrderHistory = () => {
                   Ordered on: {new Date(order.createdAt).toLocaleDateString()}
                 </p>
                 <p className="font-semibold mt-2">
-                  Total: ${order.totalAmount.toFixed(2)}
+                  Total: ₹{order.totalAmount.toFixed(2)}
                 </p>
               </div>
               <div>
@@ -114,7 +114,7 @@ const OrderHistory = () => {
                   {order.items.map((item) => (
                     <li key={item.product._id} className="flex justify-between items-center text-sm">
                       <span>{item.product.name}</span>
-                      <span>${item.price.toFixed(2)} x {item.quantity}</span>
+                      <span>₹{item.price.toFixed(2)} x {item.quantity}</span>
                     </li>
                   ))}
                 </ul>
