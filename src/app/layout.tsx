@@ -50,10 +50,10 @@ export default function RootLayout({
 
         })
 
-        console.log(count?.data.items.length, count)
+      
         // setCartItemCount(count)
         
-        setCartItemCount(count?.data.items.length) // Placeholder
+        setCartItemCount(0) // Placeholder
       }
       fetchCartItemCount()
     } else {

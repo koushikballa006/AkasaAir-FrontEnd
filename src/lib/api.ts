@@ -26,7 +26,6 @@ export async function addToCart(productId: string, quantity: number) {
     },
     body: JSON.stringify({ productId, quantity }),
   });
-  getCartCount();
   if (!response.ok) {
     throw new Error('Failed to add item to cart');
   }
