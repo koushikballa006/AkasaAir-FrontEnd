@@ -136,14 +136,14 @@ export default function CategoryProductsPage() {
           {products.map((product) => (
             <Card key={product._id} className="bg-white dark:bg-gray-800">
               <CardHeader>
-                <Image // Use Image component instead of img
-                  src={product.image.url}
-                  alt={product.name}
-                  width={500} // Set appropriate width
-                  height={500} // Set appropriate height
-                  className="w-full h-48 object-contain mb-2 rounded-t-lg"
-                />
-                <CardTitle className="text-green-600 dark:text-green-400">{product.name}</CardTitle>
+              <Image
+              src={product.image?.url || '/placeholder-image.jpg'}
+              alt={product.name}
+              width={500}
+              height={500}
+              className="w-full h-48 object-contain mb-2 rounded-t-lg"
+              />
+              <CardTitle className="text-green-600 dark:text-green-400">{product.name}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-600 dark:text-gray-300">{product.description}</p>
