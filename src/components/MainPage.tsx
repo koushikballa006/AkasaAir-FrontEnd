@@ -8,6 +8,7 @@ import Image from 'next/image';
 import Slider from "react-slick";
 import { useToast } from "@/hooks/use-toast";
 import Footer from "@/components/ui/Footer"
+import { useRouter } from 'next/navigation';
 // Import css files for react-slick
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -41,6 +42,7 @@ interface Product {
 
 export default function MainPage() {
   const { toast } = useToast();
+  const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
@@ -124,17 +126,8 @@ export default function MainPage() {
   }, [searchTerm, toast]);
 
   const handleCategoryClick = (categoryName: string) => {
-    if (isLoggedIn) {
-      // Navigate to category page
-      window.location.href = `/category/${categoryName}`;
-    } else {
-      // Show login prompt
-      toast({
-        title: "Login Required",
-        description: "Please log in to view and purchase products.",
-        duration: 3000,
-      });
-    }
+    // Navigate to category page for all users
+    router.push(`/category/${categoryName}`);
   };
 
   return (
