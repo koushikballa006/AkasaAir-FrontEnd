@@ -42,10 +42,17 @@ export default function RootLayout({
     if (isLoggedIn) {
       // Replace this with your actual cart item count fetching logic
       const fetchCartItemCount = async () => {
-        const count = await getCartCount()
+        const count = await fetch('https://akasaair-backend.onrender.com/api/cart', {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+
+        })
+        console.log(count?.data.items.length)
         // setCartItemCount(count)
-        console.log(count.data)
-        setCartItemCount(0) // Placeholder
+        
+        setCartItemCount(count?.data.items.length) // Placeholder
       }
       fetchCartItemCount()
     } else {
