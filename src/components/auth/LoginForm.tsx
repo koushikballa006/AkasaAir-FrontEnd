@@ -77,7 +77,7 @@ export function LoginForm() {
   return (
     <Card className="w-[350px] border-green-500 dark:border-green-700">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-green-600 dark:text-green-400">FreshEats Login</CardTitle>
+        <CardTitle className="text-2xl font-bold text-green-600 dark:text-green-400">Login</CardTitle>
         <CardDescription className="text-gray-500 dark:text-gray-400">Enter your credentials to access your account</CardDescription>
       </CardHeader>
       <CardContent>

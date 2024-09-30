@@ -76,7 +76,7 @@ export function RegisterForm() {
   return (
     <Card className="w-[350px]">
       <CardHeader>
-        <CardTitle>Create an account</CardTitle>
+        <CardTitle className='text-green-600 dark:text-green-400'>Create an account</CardTitle>
         <CardDescription>Enter your details to register</CardDescription>
       </CardHeader>
       <CardContent>
@@ -108,7 +108,7 @@ export function RegisterForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full  bg-green-600 hover:bg-green-700 text-white" disabled={isLoading}>
               {isLoading ? "Registering..." : "Register"}
             </Button>
           </form>

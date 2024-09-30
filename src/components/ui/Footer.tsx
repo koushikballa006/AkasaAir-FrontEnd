@@ -25,7 +25,7 @@ const Footer = () => {
           </div>
           <div>
             <h3 className="text-lg font-semibold mb-4 text-green-600 dark:text-green-400">Contact Info</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-300">123 Grocery St, Food City, FC 12345</p>
+            <p className="text-sm text-gray-600 dark:text-gray-300">123 Grocery St, Bengaluru City, FC 12345</p>
             <p className="text-sm text-gray-600 dark:text-gray-300">Phone: (123) 456-7890</p>
             <p className="text-sm text-gray-600 dark:text-gray-300">Email: info@grocerystore.com</p>
           </div>
