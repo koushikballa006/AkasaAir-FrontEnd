@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getProductsByCategory, addToCart } from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import Image from 'next/image'; // Import Image from next/image
+import Image from 'next/image';
 
 interface Product {
   _id: string;
@@ -29,6 +29,14 @@ export default function CategoryProductsPage() {
   const [error, setError] = useState<string | null>(null);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const { toast } = useToast();
+  const router = useRouter();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    // Check if the user is logged in
+    const loggedInStatus = localStorage.getItem('isLoggedIn') === 'true';
+    setIsLoggedIn(loggedInStatus);
+  }, []);
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -38,11 +46,10 @@ export default function CategoryProductsPage() {
       setProducts(prevProducts => {
         return data.data.map((newProduct: Product) => ({
           ...newProduct,
-          inStock: newProduct.inStock // Always use the latest stock information
+          inStock: newProduct.inStock
         }));
       });
 
-      // Initialize quantities for new products only
       setQuantities(prevQuantities => {
         const newQuantities = { ...prevQuantities };
         data.data.forEach((product: Product) => {
@@ -62,7 +69,7 @@ export default function CategoryProductsPage() {
 
   useEffect(() => {
     fetchProducts();
-    const intervalId = setInterval(fetchProducts, 3000); // Re-render and check stock every 3 seconds
+    const intervalId = setInterval(fetchProducts, 3000);
     return () => clearInterval(intervalId);
   }, [fetchProducts]);
 
@@ -75,7 +82,7 @@ export default function CategoryProductsPage() {
       const newQuantity = isNaN(numValue) ? 1 : Math.max(1, Math.min(numValue, maxStock));
       
       if (prev[productId] === newQuantity) {
-        return prev; // No change, return the previous state
+        return prev;
       }
       
       return {
@@ -86,6 +93,16 @@ export default function CategoryProductsPage() {
   }, [products]);
 
   const handleAddToCart = async (productId: string) => {
+    if (!isLoggedIn) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to add items to your cart.",
+        duration: 3000,
+      });
+      router.push('/login');
+      return;
+    }
+
     const quantity = quantities[productId] || 1;
     try {
       await addToCart(productId, quantity);
@@ -136,14 +153,14 @@ export default function CategoryProductsPage() {
           {products.map((product) => (
             <Card key={product._id} className="bg-white dark:bg-gray-800">
               <CardHeader>
-              <Image
-              src={product.image?.url || '/placeholder-image.jpg'}
-              alt={product.name}
-              width={500}
-              height={500}
-              className="w-full h-48 object-contain mb-2 rounded-t-lg"
-              />
-              <CardTitle className="text-green-600 dark:text-green-400">{product.name}</CardTitle>
+                <Image
+                  src={product.image?.url || '/placeholder-image.jpg'}
+                  alt={product.name}
+                  width={500}
+                  height={500}
+                  className="w-full h-48 object-contain mb-2 rounded-t-lg"
+                />
+                <CardTitle className="text-green-600 dark:text-green-400">{product.name}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-600 dark:text-gray-300">{product.description}</p>
