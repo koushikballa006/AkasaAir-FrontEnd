@@ -93,18 +93,34 @@ export default function CategoryProductsPage() {
         title: "Success",
         description: `Added ${quantity} item(s) to cart`,
       });
+      // Optionally, refresh the product list to update stock
+      fetchProducts();
     } catch (error) {
-      if (error instanceof Error && error.message === 'Failed to add item to cart') {
-        toast({
-          title: "Login Required",
-          description: "Please log in to add items to your cart.",
-          duration: 3000,
-        });
-        router.push('/login');
+      if (error instanceof Error) {
+        if (error.message === 'Authentication required') {
+          toast({
+            title: "Login Required",
+            description: "Please log in to add items to your cart.",
+            duration: 3000,
+          });
+          router.push('/login');
+        } else if (error.message.includes('maximum')) {
+          toast({
+            title: "Stock Limit Reached",
+            description: error.message,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
       } else {
         toast({
           title: "Error",
-          description: error instanceof Error ? error.message : "An unknown error occurred",
+          description: "An unknown error occurred",
           variant: "destructive",
         });
       }

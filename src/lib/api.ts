@@ -26,9 +26,18 @@ export async function addToCart(productId: string, quantity: number) {
     },
     body: JSON.stringify({ productId, quantity }),
   });
+  
   if (!response.ok) {
-    throw new Error('Failed to add item to cart');
+    if (response.status === 401) {
+      throw new Error('Authentication required');
+    } else if (response.status === 400) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to add item to cart');
+    } else {
+      throw new Error('Failed to add item to cart');
+    }
   }
+  
   return response.json();
 }
 
