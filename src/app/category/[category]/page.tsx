@@ -142,8 +142,7 @@ export default function CategoryProductsPage() {
               width={500}
               height={500}
               className="w-full h-48 object-contain mb-2 rounded-t-lg"
-              />
-              <CardTitle className="text-green-600 dark:text-green-400">{product.name}</CardTitle>
+              /><CardTitle className="text-green-600 dark:text-green-400">{product.name}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-600 dark:text-gray-300">{product.description}</p>
