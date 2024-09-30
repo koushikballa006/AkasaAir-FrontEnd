@@ -33,6 +33,7 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ isLoggedIn, handleLogout, cartItemCount }) => {
   const { theme, setTheme } = useTheme();
+  console.log(cartItemCount)
   return (
     <div className="border-b border-green-200 dark:border-green-800 bg-white dark:bg-gray-900">
       <div className="flex h-16 items-center px-4 max-w-7xl mx-auto">

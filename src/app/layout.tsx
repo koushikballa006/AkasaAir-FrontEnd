@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster"
 import Navbar from "@/components/Navbar"
 import { ThemeProvider } from "@/components/theme-provider"
 import "./globals.css"
+import { getCartCount } from "@/lib/api"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -41,8 +42,9 @@ export default function RootLayout({
     if (isLoggedIn) {
       // Replace this with your actual cart item count fetching logic
       const fetchCartItemCount = async () => {
-        // const count = await getCartCount()
+        const count = await getCartCount()
         // setCartItemCount(count)
+        console.log(count.data)
         setCartItemCount(0) // Placeholder
       }
       fetchCartItemCount()
