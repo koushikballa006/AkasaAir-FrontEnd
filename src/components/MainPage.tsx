@@ -83,7 +83,7 @@ export default function MainPage() {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch('/api/products');
+        const response = await fetch('https://akasaair-backend.onrender.com/api/products');
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
