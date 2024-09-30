@@ -27,9 +27,9 @@ const Footer = () => {
             <CardContent>
               <ul className="space-y-2">
                 <li><Link href="/" className="text-green-600 dark:text-green-400 hover:underline">Home</Link></li>
-                <li><Link href="/products" className="text-green-600 dark:text-green-400 hover:underline">Products</Link></li>
-                <li><Link href="/categories" className="text-green-600 dark:text-green-400 hover:underline">Categories</Link></li>
-                <li><Link href="/contact" className="text-green-600 dark:text-green-400 hover:underline">Contact Us</Link></li>
+                <li><Link href="#" className="text-green-600 dark:text-green-400 hover:underline">Products</Link></li>
+                <li><Link href="#" className="text-green-600 dark:text-green-400 hover:underline">Categories</Link></li>
+                <li><Link href="#" className="text-green-600 dark:text-green-400 hover:underline">Contact Us</Link></li>
               </ul>
             </CardContent>
           </Card>
